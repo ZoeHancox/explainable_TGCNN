@@ -1,0 +1,13 @@
+tensorflow
+keras
+Keras-Preprocessing
+pandas
+sklearn
+matplotlib
+scipy
+scikit-learn
+pytest
+seaborn
+numpy
+networkx
+plotly
