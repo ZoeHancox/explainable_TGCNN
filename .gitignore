@@ -164,4 +164,7 @@ cython_debug/
 # HTML
 *.html
 
+# Model weights
+*.data-00000-of-00001
+*.index
 
