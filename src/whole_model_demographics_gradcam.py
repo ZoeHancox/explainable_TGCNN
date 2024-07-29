@@ -37,6 +37,8 @@ class TGCNN_Model(tf.keras.Model):
 
         self.dy_du_branch1 = None
         self.dy_du_branch2 = None
+
+        self.f_map_branch1 = None
         
         self.lstm = tf.keras.layers.LSTM(units=lstm_units) # input shape must be 3D with shape [batch,timesteps,feature]
         self.flatten = tf.keras.layers.Flatten()
@@ -108,6 +110,7 @@ class TGCNN_Model(tf.keras.Model):
             x_long = self.batchnorm1(x_long)
             x_long = self.activation(x_long)
             cnn_out1 = tf.squeeze(x_long, axis=2)
+            self.f_map_branch1 = cnn_out1 # get the feature maps out
             
             
             with tf.GradientTape(persistent=True) as tape1:
