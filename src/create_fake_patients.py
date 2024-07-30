@@ -1,5 +1,6 @@
 import pandas as pd
 import random
+import tensorflow as tf
 
 def create_fake_index_list(max_events, max_nodes):
     """Create indices for fake patients e.g. [[56,23,99], [34,3,98]]
@@ -97,3 +98,53 @@ def create_fake_int_label(num_patients):
     df = pd.DataFrame({'int_label': random_values})
 
     return df
+
+def return_fake_pat(num_patients, max_visits, max_nodes, hip_or_knee, n):
+    """_summary_
+
+    Args:
+        num_patients (int): number of patients to generate.
+        max_visits (int): maximum number of timesteps to include.
+        max_nodes (_type_): maximum number of Read Codes to include.
+        hip_or_knee (str): which replacement type is being predicted.
+        n (int): patient number to plot.
+
+    Returns:
+        tf.sparse array: Sparse patient graph 3D.
+        tf.sparse array: Sparse patient graph 4D.
+        tf array: demographics including gender, IMD quin and a placeholder.
+                    for age as you can't normalise when only one value.
+        str: 'hip' or 'knee'.
+        binary: 1 for replacement, 0 for no replacement.
+
+    """
+    if n >= num_patients:
+        raise ValueError(f"Input 'n' must be smaller than input 'num_patients'. Received n={n}, num_patients={num_patients}.")
+    
+    cv_patients = create_fake_patient_df(num_patients=num_patients, max_events=max_visits, max_nodes=max_nodes)
+    i_list = cv_patients.iloc[n]['indices'] # indices from patient cell
+    v_list = cv_patients.iloc[n]['values'] # values from patient cell
+
+    individual_sparse = tf.sparse.SparseTensor(i_list, v_list, (max_nodes, max_nodes, 100))
+
+    # Adding the sparse tensor to a list of all the tensors
+    ordered_indiv = tf.sparse.reorder(individual_sparse) # reorder required for tensor to work (no effect to outcome)
+ 
+    # expand the dims to have a batch size for the model
+    input_4d = tf.sparse.expand_dims(ordered_indiv,axis=0)
+
+    outcome = cv_patients.iloc[n]['replace_type']
+
+    def classify_outcome(outcome):
+        return 1 if outcome == hip_or_knee else 0
+
+    outcome_bin = classify_outcome(outcome)
+
+    demos = cv_patients[['gender', 'imd_quin', 'age_at_label_event']].iloc[n]
+    demos_z = demos.copy()
+    demos_z['age_zscore'] = 2
+    demos_z = demos_z.apply(pd.to_numeric)  
+    demo_vals = demos_z[['gender', 'imd_quin', 'age_zscore']].values 
+    demo_tensor = tf.convert_to_tensor([demo_vals])
+
+    return ordered_indiv, input_4d, demo_tensor, outcome, outcome_bin
