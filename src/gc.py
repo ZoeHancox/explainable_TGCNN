@@ -2,8 +2,6 @@ import numpy as np
 import networkx as nx
 import plotly.graph_objects as go
 import plotly.io as pio
-import webbrowser
-import os
 import pandas as pd
 import random
 import string
@@ -11,10 +9,8 @@ import statistics
 from src import create_fake_patients, whole_model_demographics_gradcam, graph_plot, plot_feature_value
 import tensorflow as tf
 from csv import writer
-import seaborn as sns
 import matplotlib.pyplot as plt
-print("tensorflow version:", tf. __version__)
-tf.config.list_physical_devices()
+
 
 def generate_filt_sequences(stride:int, filter_size:int, feature_map_size:int):
     """Return a list of indices that the filter covers in one step. e.g. if the filter is

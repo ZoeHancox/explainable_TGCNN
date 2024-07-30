@@ -3,20 +3,11 @@
 import numpy as np
 import networkx as nx
 import plotly.graph_objects as go
-import webbrowser
-import os
 import pandas as pd
-import random
-import string
-import statistics
 from src import create_fake_patients, whole_model_demographics_gradcam
-from tensorflow import keras
 import tensorflow as tf
 from csv import writer
-import seaborn as sns
 import matplotlib.pyplot as plt
-print("tensorflow version:", tf. __version__)
-tf.config.list_physical_devices()
 
 def create_edges_df_gc(patient_graph:np.array):
     """Create a DataFrame of the edges of the patient graph, including the start and end nodes and the time 
