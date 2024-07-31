@@ -3,6 +3,7 @@
 import pandas as pd
 import tensorflow as tf
 from src import utils
+import matplotlib.pyplot as plt
 
 
 def get_max_act_per_feat(model, num_filters:int, num_patients:int, pat_df:pd.DataFrame, 
@@ -50,3 +51,50 @@ def get_max_act_per_feat(model, num_filters:int, num_patients:int, pat_df:pd.Dat
     filt_nums = filt_nums * num_patients
 
     return replacement_true_lst, max_w_filt_lst, filt_nums
+
+def act_diff(replacement_true_lst:list, max_w_filt_lst:list, filt_nums:list):
+    """Calculate the difference between the two Hip Replacement classes for each Filter
+
+    Args:
+        replacement_true_lst (list): binary whether someone has a replacement or not.
+        max_w_filt_lst (list): maximum value in feature map.
+        filt_nums (list): number of filters.
+
+    Returns:
+        pd.DataFrame: DataFrame with filters and the respective difference in the max activation 
+        values between the two classes.
+    """
+    data = {
+        'Hip Replacement': replacement_true_lst,
+        'Max Activation': max_w_filt_lst,
+        'Filter': filt_nums
+    }
+
+    filt_act_df = pd.DataFrame(data)
+
+    mean_activation = filt_act_df.groupby(['Filter', 'Hip Replacement'])['Max Activation'].mean()
+
+    mean_activation_df = mean_activation.to_frame()
+    mean_activation_df.reset_index(inplace=True)
+
+    # Calculate the difference between the two Hip Replacement rows for each Filter
+    mean_activation_df['Difference'] = mean_activation_df.groupby('Filter')['Max Activation'].diff()
+    mean_activation_df['Difference'] = mean_activation_df['Difference'].abs()
+
+    mean_activation_df = mean_activation_df[['Filter', 'Difference']].dropna().reset_index(drop=True)
+
+    mean_activation_df.sort_values(by='Difference', ascending=False)
+
+    mean_activation_df['Filter'] = mean_activation_df['Filter'].astype(int)
+
+    plt.figure(figsize=(10, 6))
+    #plt.plot(mean_activation_df['Filter'], mean_activation_df['Difference'], marker='.', linestyle='-')
+    plt.bar(mean_activation_df['Filter'], mean_activation_df['Difference'], color='turquoise')
+    plt.xlabel('Filter')
+    plt.ylabel('Mean Difference Between Class 0 and Class 1')
+    plt.title('Difference in Activation per Class for Each Filter')
+    plt.xticks(mean_activation_df['Filter'], rotation=45)  # Set x-axis ticks to integer values with rotation
+    plt.tight_layout()  # Adjust layout to prevent clipping of labels
+    plt.show()
+
+    return mean_activation_df
