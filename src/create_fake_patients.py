@@ -149,7 +149,31 @@ def return_fake_pat(num_patients, max_visits, max_nodes, hip_or_knee, n):
 
     return ordered_indiv, input_4d, demo_tensor, outcome, outcome_bin
 
-def return_pat_from_df(pat_df, max_nodes, hip_or_knee, n):
+def return_pat_from_df(pat_df:pd.DataFrame, max_nodes:int, hip_or_knee:str, n:int):
+    """Select a patient from the indices/values dataframe and get their SparseTensor, 
+    dense tensor, demographic information and true outcome/class.
+
+    Args:
+        pat_df (pd.DataFrame): DataFrame of patient indices, values, demos, outcome.
+        max_nodes (int): maximum number of nodes/Read Codes.
+        hip_or_knee (str): model type 'hip' or 'knee'.
+        n (int): patient row to extract.
+
+    Raises:
+        ValueError: n must be less than pat_df 
+
+    Returns:
+        tf.SparseTensor: 3D sparse tensor representing patient graph.
+        tf.SparseTensor: 4D sparse tensor representing patient graph in batch.
+        tf.Tensor: demographics of patient.
+        str: replacement type or no replacement.
+        int: 1 if replacement, 0 if no replacement.
+    """
+
+    if n >= len(pat_df):
+        raise ValueError(f"Input 'n' must be smaller than the number of patients. Received n={n}, num_patients={len(pat_df)}.")
+    
+    
     i_list = pat_df.iloc[n]['indices'] # indices from patient cell
     v_list = pat_df.iloc[n]['values'] # values from patient cell
 
