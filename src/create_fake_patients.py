@@ -36,8 +36,8 @@ def create_fake_patient_df(num_patients, max_events, max_nodes):
         dataframe: df with columns for inputs and labels
     """
     # create a dictionary with the index as keys and the values as lists
-    data = {'user': [i for i in range(1, num_patients)],
-            'indices': [create_fake_index_list(max_events, max_nodes) for i in range(1, num_patients)],
+    data = {'user': [i for i in range(num_patients)],
+            'indices': [create_fake_index_list(max_events, max_nodes) for i in range(num_patients)],
             'values':0,
             'num_time_steps':0,
             'gender':0,
@@ -141,6 +141,34 @@ def return_fake_pat(num_patients, max_visits, max_nodes, hip_or_knee, n):
     outcome_bin = classify_outcome(outcome)
 
     demos = cv_patients[['gender', 'imd_quin', 'age_at_label_event']].iloc[n]
+    demos_z = demos.copy()
+    demos_z['age_zscore'] = 2
+    demos_z = demos_z.apply(pd.to_numeric)  
+    demo_vals = demos_z[['gender', 'imd_quin', 'age_zscore']].values 
+    demo_tensor = tf.convert_to_tensor([demo_vals])
+
+    return ordered_indiv, input_4d, demo_tensor, outcome, outcome_bin
+
+def return_pat_from_df(pat_df, max_nodes, hip_or_knee, n):
+    i_list = pat_df.iloc[n]['indices'] # indices from patient cell
+    v_list = pat_df.iloc[n]['values'] # values from patient cell
+
+    individual_sparse = tf.sparse.SparseTensor(i_list, v_list, (max_nodes, max_nodes, 100))
+
+    # Adding the sparse tensor to a list of all the tensors
+    ordered_indiv = tf.sparse.reorder(individual_sparse) # reorder required for tensor to work (no effect to outcome)
+ 
+    # expand the dims to have a batch size for the model
+    input_4d = tf.sparse.expand_dims(ordered_indiv,axis=0)
+
+    outcome = pat_df.iloc[n]['replace_type']
+
+    def classify_outcome(outcome):
+        return 1 if outcome == hip_or_knee else 0
+
+    outcome_bin = classify_outcome(outcome)
+
+    demos = pat_df[['gender', 'imd_quin', 'age_at_label_event']].iloc[n]
     demos_z = demos.copy()
     demos_z['age_zscore'] = 2
     demos_z = demos_z.apply(pd.to_numeric)  
