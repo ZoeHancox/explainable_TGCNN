@@ -69,7 +69,7 @@ class EarlyStopping:
             self.trace_func(f'Validation loss decreased ({self.val_loss_min:.6f} --> {val_loss:.6f}).')
         self.val_loss_min = val_loss # replace the lowest loss value with the new lowest loss value
         if save_filters:
-            with open('../model_explainability/cnn_filters/'+run_name+'_filter.npy', 'wb') as f:
+            with open(run_name+'_filter.npy', 'wb') as f:
                 np.save(f, model.tg_conv_layer1.trainable_weights[0].numpy())
         # print("Feature maps from CNN saving...")
         # model.save_layer_output(f"{run_name}_CNN_feature_maps.npy")
