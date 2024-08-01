@@ -10,6 +10,7 @@ from src import create_fake_patients, whole_model_demographics_gradcam, graph_pl
 import tensorflow as tf
 from csv import writer
 import matplotlib.pyplot as plt
+import math
 
 
 def generate_filt_sequences(stride:int, filter_size:int, feature_map_size:int):
@@ -217,7 +218,7 @@ def plot_gradcam_plotly(edge_pos_df:pd.DataFrame, pos_df:pd.DataFrame, read_code
         textposition='middle center', 
         textfont=dict(
             size=10,
-            color=text_colors  # Set color for edge text
+            color=text_colors  # Set color for text
         ),
         hoverinfo='text',
         marker=dict(
@@ -237,7 +238,11 @@ def plot_gradcam_plotly(edge_pos_df:pd.DataFrame, pos_df:pd.DataFrame, read_code
         hovertext=node_hover_text
     )
 
-    node_trace.marker.color = read_code_pos_df['norm_timestep_ave_grad'].to_list() # colour the markers based on the number of node connections
+    node_colors = read_code_pos_df['norm_timestep_ave_grad'].to_list()
+    if True in np.isnan(np.array(node_colors)):
+        node_colors = [1]*len(node_colors)
+        
+    node_trace.marker.color = node_colors
 
 
     # Calculate midpoints for edge label annotations
@@ -260,11 +265,25 @@ def plot_gradcam_plotly(edge_pos_df:pd.DataFrame, pos_df:pd.DataFrame, read_code
         out_print = f'Patient will likely need a hip replacement in {years_in_advance} years time.'
     else:
         out_print = f'It is unlikely this patient will need a hip replacement in {years_in_advance} years time.'
-    stream_num = '1'
+        stream_num = '1'
 
     proba_of_replace = 1/ (1+np.exp(logits)) # use sigmoid to convert logits to probs
+    
+    # if ((proba_of_replace.item() > 0.5) and (outcome != 'hip')) or ((proba_of_replace.item()) < 0.5) and (outcome == 'hip'):
+    #     print("Model predicted incorrectly")
+    if outcome == 'hip':
+        true_out = f'A hip replacement was needed.'
+    else:
+        true_out = f'A hip replacement was not needed.'
+        
+    # if proba_of_replace.item() > 0.5:
+    #     model_pred = 'will need a hip replacement'
+    # else:
+    #     model_pred = 'will not need a hip replacement'
+    # out_print = f"The model predicts that this person {model_pred} in {years_in_advance} years time."
+        
     annotations.append(dict(
-                        text=f"The probability of this patient needing a replacement is {round(proba_of_replace.item()*100,2)}%. {out_print}",
+                        text=f"The models predicts the probability of this patient needing a replacement is {round(proba_of_replace.item()*100,2)}%. \nThe patient's true outcome: {true_out}",
                         showarrow=False,
                         xref="paper", yref="paper",
                         x=0.005, y=-0.002 ))
@@ -275,14 +294,13 @@ def plot_gradcam_plotly(edge_pos_df:pd.DataFrame, pos_df:pd.DataFrame, read_code
                         titlefont_size=16,
                         showlegend=False,
                         hovermode='closest',
-                        margin=dict(b=20, l=10, r=5, t=50),
+                        margin=dict(b=15, l=10, r=5, t=50),
                         annotations=annotations,
                         xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
                         yaxis=dict(showgrid=False, zeroline=False, showticklabels=False))
                     )
 
-    if ((proba_of_replace.item() > 0.5) and (outcome != 'hip')) or ((proba_of_replace.item()) < 0.5) and (outcome == 'hip'):
-        print("Model predicted incorrectly")
+    
 
-    pio.write_html(fig, file="graph-grad-cam_plot.html", auto_open=False)
+    pio.write_html(fig, file="graph-grad-cam_plot.html", auto_open=True)
     fig.show()
