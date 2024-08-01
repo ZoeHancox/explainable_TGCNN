@@ -25,8 +25,8 @@ def plot_loss_curve(train_loss, val_loss, test_lost, run_name, ran_search_num):
 
     plt.xlabel('Epochs', fontsize=font_size)
     plt.ylabel('Loss', fontsize=font_size)
-    #plt.ylim(0, 1.0)
-    plt.xlim(1, len(train_loss)+1)
+    #plt.ylim(0, 1.0) # consistent scale
+    plt.xlim(1, len(train_loss)+1) # consistent scale
 
 
     p = [a, b, c]
@@ -197,6 +197,7 @@ def batch_set(indice_set, input_matrices, labels, batchsize=64):
     This function takes a set of randomly selected indices and makes a batch of graphs (lists)"""
     number_of_batches = round(len(indice_set) / batchsize) # get the number of patients in each batch
     index_partitions = [sorted(indice_set[i::number_of_batches]) for i in range(number_of_batches)] # put the indices into batches
+    #print(index_partitions)
     batched_graphs = [[input_matrices[i] for i in index_partition] for index_partition in index_partitions]
     batched_labels = [[labels[i] for i in index_partition] for index_partition in index_partitions]
     return batched_graphs, batched_labels, index_partitions
@@ -286,16 +287,17 @@ def metric_save(trn_epoch_metric, trn_all_epoch_avgs,
     val_all_epoch_avgs.append(val_epoch_metric)
     
     
-def get_labels_binary(df):
+def get_labels_binary(df, hip_or_knee):
     """
     Gets the labels in the required format for the model.
     Args:
         df (DataFrame): dataframe containing the labels
+        hip_or_knee (string): string stating which replacement type the model is predicting.
     Returns:
         y (DataFrame): binary integer for hip or no replacement.
     """
     def map_values(value):
-        if 'hip' in value:
+        if hip_or_knee in value:
             return 1
         else:
             return 0
@@ -357,7 +359,7 @@ def create_sparse_tensors(sample_size, input_values_indices_df, max_event_codes,
         i_list = input_values_indices_df.iloc[patient]['indices'] # indices from patient cell
         v_list = input_values_indices_df.iloc[patient]['values'] # values from patient cell
 
-        individual_sparse = tf.sparse.SparseTensor(i_list, v_list, (max_event_codes, max_event_codes, max_timesteps))
+        individual_sparse = tf.sparse.SparseTensor(indices=i_list, values=v_list, dense_shape=[max_event_codes, max_event_codes, max_timesteps])
 
         # Adding the sparse tensor to a list of all the tensors
         ordered_indiv = tf.sparse.reorder(individual_sparse) # reorder required for tensor to work (no effect to outcome)
@@ -394,7 +396,7 @@ def convert_demos_to_tensor(df, indices, demo):
     demo_tensor = tf.convert_to_tensor(demo_vals)
 
     #pat_num_col = df['patientnum'].apply(pd.to_numeric)
-    pat_num_list = df['user'].apply(pd.to_numeric).iloc[indices].values.tolist() #needs to be valid column name e.g. 'patientnum' or 'users'
+    pat_num_list = df['patientnum'].apply(pd.to_numeric).iloc[indices].values.tolist()
     #print(pat_num_list)
 
     
@@ -414,14 +416,25 @@ def calibration_slope(true_y, logits):
     odds = np.exp(logits)
     np.seterr(invalid='ignore')
     probs = odds / (1 + odds)
+    # print(len(probs))
+    # print(len(true_y))
     
+#     # Change to get the probability of the positive class only
+#     prob_pos = probs[:,1]
+#     probs = np.array(probs)
+    
+#     print("prob_pos", prob_pos)
+#     print("True y", true_y)
 
+#     true_y = np.argmax(true_y, axis=1)
     fraction_of_pos, mean_pred_value = calibration_curve(true_y, probs, n_bins=10)#, normalize=False)
     try:
         slope, b = np.polyfit(mean_pred_value, fraction_of_pos, 1)
 
     except:
         slope=0
+
+    # print(slope)
     
     return slope
 
@@ -453,7 +466,7 @@ def return_pat_from_df(pat_df:pd.DataFrame, max_nodes:int, hip_or_knee:str, n:in
     i_list = pat_df.iloc[n]['indices'] # indices from patient cell
     v_list = pat_df.iloc[n]['values'] # values from patient cell
 
-    individual_sparse = tf.sparse.SparseTensor(i_list, v_list, (max_nodes, max_nodes, 100))
+    individual_sparse = tf.sparse.SparseTensor(i_list, v_list, (max_nodes, max_nodes, 200))
 
     # Adding the sparse tensor to a list of all the tensors
     ordered_indiv = tf.sparse.reorder(individual_sparse) # reorder required for tensor to work (no effect to outcome)
