@@ -186,7 +186,18 @@ def text_color_mapping(numbers):
     return ['black' if num < 0.5 else 'white' for num in numbers]
 
 def plot_gradcam_plotly(edge_pos_df:pd.DataFrame, pos_df:pd.DataFrame, read_code_pos_df:pd.DataFrame,
-                        years_in_advance:str, logits:tf.Tensor, outcome:str):
+                        years_in_advance:str, logits:tf.Tensor, outcome:str, filename:str):
+    """_summary_
+
+    Args:
+        edge_pos_df (pd.DataFrame): _description_
+        pos_df (pd.DataFrame): _description_
+        read_code_pos_df (pd.DataFrame): _description_
+        years_in_advance (str): _description_
+        logits (tf.Tensor): _description_
+        outcome (str): _description_
+        filename (str): Name to save the file as, this is suffixed with '_plot.html'.
+    """
     edge_x = []
     edge_y = []
 
@@ -302,5 +313,5 @@ def plot_gradcam_plotly(edge_pos_df:pd.DataFrame, pos_df:pd.DataFrame, read_code
 
     
 
-    pio.write_html(fig, file="graph-grad-cam_plot.html", auto_open=True)
+    pio.write_html(fig, file=filename+"_plot.html", auto_open=True)
     fig.show()
