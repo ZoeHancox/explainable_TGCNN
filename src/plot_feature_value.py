@@ -63,8 +63,21 @@ def violin_plots(filt_nums:list, max_w_filt_lst:list, replacement_true_lst:list)
     plt.legend(title='Hip Replacement')
     plt.xlabel('Filter Number')
     plt.ylabel('Maximum Activation in Feature Map')
-    # plt.xlim(-1,15.5)
+    plt.xlim(-1,15.5)
     plt.show()
+
+    if max(filt_nums) > 16:
+        plt.figure(figsize=(14,6))
+
+        palette = sns.color_palette("colorblind")
+        sns.violinplot(x=filt_nums, y=max_w_filt_lst, hue=replacement_true_lst, split=True, inner="quartile", palette=palette[1:3])
+
+        plt.legend(title='Hip Replacement')
+        plt.xlabel('Filter Number')
+        plt.ylabel('Maximum Activation in Feature Map')
+        plt.xlim(15.5,31.5)
+        plt.show()
+
 
 def max_act_box_plots(filt_nums:list, max_w_filt_lst:list, replacement_true_lst:list):
     """Create a seaborn boxplot plot with pairs for each filter showing the distribution 
@@ -78,7 +91,7 @@ def max_act_box_plots(filt_nums:list, max_w_filt_lst:list, replacement_true_lst:
     plt.figure(figsize=(14,6))
 
     palette = sns.color_palette("colorblind")
-    sns.boxplot(x=filt_nums, y=max_w_filt_lst, hue=replacement_true_lst, palette=palette[2:4], fliersize=0)
+    sns.boxplot(x=filt_nums, y=max_w_filt_lst, hue=replacement_true_lst, palette=palette[1:3], fliersize=0)
 
     for x_tick in range(1, max(filt_nums)):
         plt.axvline(x=x_tick-0.5, color='grey', linestyle='--', linewidth=0.5)
