@@ -156,8 +156,12 @@ def map_read_code_labels(pos_df:pd.DataFrame, read_code_map_df:pd.DataFrame, tim
     # merge the x cols in timestep_ave_grad_df with read_code_pos_df x col to assign grad strength to nodes
     read_code_pos_df = read_code_pos_df.merge(timestep_ave_grad_df, on='x', how='left')
 
-    # normalise (min-max) the timestep_ave_grad column (needed as not all of the timesteps are used and should give better y axis values)
-    read_code_pos_df['norm_timestep_ave_grad'] = (read_code_pos_df['timestep_ave_grad'] - read_code_pos_df['timestep_ave_grad'].min()) / (read_code_pos_df['timestep_ave_grad'].max() - read_code_pos_df['timestep_ave_grad'].min())
+    # # normalise (min-max) the timestep_ave_grad column (needed as not all of the timesteps are used and should give better y axis values)
+    # read_code_pos_df['norm_timestep_ave_grad'] = (read_code_pos_df['timestep_ave_grad'] - read_code_pos_df['timestep_ave_grad'].min()) / (read_code_pos_df['timestep_ave_grad'].max() - read_code_pos_df['timestep_ave_grad'].min())
+    
+    # Return the percentage contribution of each timestep so all timestep values sum to 1
+    read_code_pos_df['norm_timestep_ave_grad'] = (read_code_pos_df['timestep_ave_grad'] / read_code_pos_df['timestep_ave_grad'].sum())*100
+    
     return read_code_pos_df
 
 
@@ -240,7 +244,7 @@ def plot_gradcam_plotly(edge_pos_df:pd.DataFrame, pos_df:pd.DataFrame, read_code
             size=45,
             colorbar=dict(
                 thickness=15,
-                title='Influence Visit Had on Prediction (Gradient)',
+                title='Influence Visit Had on Risk Prediction (%)',
                 xanchor='left',
                 titleside='right'
             ),
@@ -250,8 +254,10 @@ def plot_gradcam_plotly(edge_pos_df:pd.DataFrame, pos_df:pd.DataFrame, read_code
     )
 
     node_colors = read_code_pos_df['norm_timestep_ave_grad'].to_list()
-    if True in np.isnan(np.array(node_colors)):
-        node_colors = [1]*len(node_colors)
+
+    # This shouldn't happen if we don't normalise
+    # if True in np.isnan(np.array(node_colors)):
+    #     node_colors = [1]*len(node_colors)
         
     node_trace.marker.color = node_colors
 
@@ -276,7 +282,7 @@ def plot_gradcam_plotly(edge_pos_df:pd.DataFrame, pos_df:pd.DataFrame, read_code
         out_print = f'Patient will likely need a hip replacement in {years_in_advance} years time.'
     else:
         out_print = f'It is unlikely this patient will need a hip replacement in {years_in_advance} years time.'
-        stream_num = '1'
+    stream_num = '1'
 
     proba_of_replace = 1/ (1+np.exp(logits)) # use sigmoid to convert logits to probs
     
