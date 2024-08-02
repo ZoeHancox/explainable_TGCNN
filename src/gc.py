@@ -45,16 +45,19 @@ def find_indices_of_value(list_of_lists, value):
     return [index for index, sublist in enumerate(list_of_lists) if value in sublist]
 
 
-def calc_local_map(model, grads:tf.Tensor):
+def calc_local_map(model, grads:tf.Tensor, filt_num:int=None) -> np.array:
     """Calculate the graph-Grad-CAM localisation map by performing global
     average pooling to get the weightings for each filter, then get the weighted 
     activation map before passing this through a ReLU to only focus on features 
     with a positive influence on the class of interest.
 
+    Can choose to look at one filter rather than all.
+
     Args:
         model (tf.model): trained TG-CNN model.
         grads (tf.Tensor): gradients from the TG-CNN model, the CNN output with
                         respect to the model output.
+        filt_num (int): filter number to get the value of, if None then use all.
 
     Returns:
         np.array: weighted feature map values forming localisation map.
@@ -64,28 +67,41 @@ def calc_local_map(model, grads:tf.Tensor):
     # Global average pooling to get the weight for each filter
 
     f_map_branch1 = tf.squeeze(model.f_map_branch1)
+    k_size = f_map_branch1.shape[1] # length of feature map
+    if filt_num == None:
+        grads_2D = tf.squeeze(grads)
+        grads_2D = np.array(grads_2D)
+        #print(grads_2D.shape) # filters, k_size
+    
+        alphak_lst = [] # alpha value for each filter
+        for filt in range(f_map_branch1.shape[0]):
+            filt_grad_sum = tf.reduce_sum(grads_2D, axis=1)[filt]
+            alpha_k = (1/k_size)*filt_grad_sum
+            alphak_lst.append(float(alpha_k))
 
-    grads_2D = tf.squeeze(grads)
-    grads_2D = np.array(grads_2D)
-    #print(grads_2D.shape) # filters, k_size
 
-    alphak_lst = [] # alpha value for each filter
-    k_size = f_map_branch1.shape[1] # number of filters
-    for filt in range(f_map_branch1.shape[0]):
-        filt_grad_sum = tf.reduce_sum(f_map_branch1, axis=1)[filt]
+        # Get 1D localisation map
+        alphak_tf = tf.constant(alphak_lst, dtype=tf.float32)
+        alphak_tf = tf.reshape(alphak_tf, (-1, 1))
+
+        weighted_f_maps = alphak_tf*f_map_branch1
+        weighted_f_map = tf.reduce_sum(weighted_f_maps, axis=0)
+
+        # ReLU as we only are interested in the features that have a positive influence of the class of interest
+        l_map = np.array(tf.nn.relu(weighted_f_map))
+    else:
+        filt_grads = grads[0, filt_num]
+        filt_grad_sum = tf.reduce_sum(filt_grads)
         alpha_k = (1/k_size)*filt_grad_sum
-        alphak_lst.append(float(alpha_k))
+
+        # Get 1D localisation map
+        alphak_tf = tf.constant(alpha_k, dtype=tf.float32)
+        weighted_f_map = alphak_tf*f_map_branch1[filt_num]
+
+        # ReLU as we only are interested in the features that have a positive influence of the class of interest
+        l_map = np.array(tf.nn.relu(weighted_f_map))
 
 
-    # Get 1D localisation map
-    alphak_tf = tf.constant(alphak_lst, dtype=tf.float32)
-    alphak_tf = tf.reshape(alphak_tf, (-1, 1))
-
-    weighted_f_maps = alphak_tf*f_map_branch1
-    weighted_f_map = tf.reduce_sum(weighted_f_maps, axis=0)
-
-    # ReLU as we only are interested in the features that have a positive influence of the class of interest
-    l_map = np.array(tf.nn.relu(weighted_f_map))
     return l_map
 
 
