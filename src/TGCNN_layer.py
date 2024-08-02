@@ -50,7 +50,7 @@ class TGCNN_layer(tf.keras.layers.Layer):
             self.gammat = tf.Variable(
                 initial_value=tf.constant(1, dtype=tf.float32), 
                 trainable=False, dtype=self.dtype_weights, name='gammat')
-        print("normalised gamma", self.gammat.numpy())
+        #print("normalised gamma", self.gammat.numpy())
      
     def get_config(self):
         config = super(TGCNN_layer, self.get_config())
