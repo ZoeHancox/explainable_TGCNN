@@ -6,9 +6,9 @@ from src import utils
 import matplotlib.pyplot as plt
 
 
-def get_max_act_per_feat(model, num_filters:int, num_patients:int, pat_df:pd.DataFrame, 
-                         max_event_codes:int, hip_or_knee:str):
-    """Get the maximum o feach feature map for each patient alongside the patients true outcome.
+def get_act_metric_per_feat(model, num_filters:int, num_patients:int, pat_df:pd.DataFrame, 
+                         max_event_codes:int, hip_or_knee:str, metric:str):
+    """Get the maximum of each feature map for each patient alongside the patients true outcome.
 
     Args:
         model (tf.Model): trained TG-CNN model.
@@ -17,10 +17,13 @@ def get_max_act_per_feat(model, num_filters:int, num_patients:int, pat_df:pd.Dat
         pat_df (pd.DataFrame): DataFrame of all the patients graph constructors and demographics.
         max_event_codes (int): maximum number of Read Codes/nodes.
         hip_or_knee (str): 'hip' or 'knee' depending on the model.
+        metric (str): can be 'max', 'mean' or 'median'.
 
     Returns:
         list, list, list: list of classes per patient, list of max activation 
         per feature map, list of the filter numbers.
+    Raises:
+        ValueError: If the metric is not one of the expected values.
     """
     replacement_true_lst = []
     max_w_filt_lst = []
@@ -37,15 +40,38 @@ def get_max_act_per_feat(model, num_filters:int, num_patients:int, pat_df:pd.Dat
         
         feature_maps = model.f_map_branch1
         
-        # Get the maximum value from each filter and apply ReLU
-        max_w_per_filt = tf.reduce_max(feature_maps, axis=2)
-        max_w_per_filt_relu = tf.nn.relu(max_w_per_filt)
+        if metric == 'max':
+            # Get the maximum value from each filter and apply ReLU
+            w_per_filt = tf.reduce_max(feature_maps, axis=2)
+        elif metric == 'mean':
+            w_per_filt = tf.reduce_mean(feature_maps, axis=2)
+        elif metric == 'median':
+            x_sorted = tf.sort(feature_maps, axis=2)
+            n = x_sorted.shape[2]
+
+            # Calculate the median index (integer division)
+            middle = n // 2
+
+            # Compute the median along the specified axis
+            # If the size of the axis is odd, take the middle element
+            # If even, average the two middle elements
+            w_per_filt = tf.cond(
+                tf.equal(n % 2, 1),
+                lambda: tf.gather(x_sorted, middle, axis=2),
+                lambda: tf.reduce_mean(tf.gather(x_sorted, [middle - 1, middle], axis=2), axis=2)
+            )
+        else:
+            raise ValueError(f"Unsupported metric: '{metric}'. Expected one of: 'mean', 'max', or 'median'.")
+
+
+
+        w_per_filt_relu = tf.nn.relu(w_per_filt)
         
         # Convert to list and extend results directly
-        max_w_per_filt_relu_np = max_w_per_filt_relu.numpy().flatten().tolist()
+        w_per_filt_relu_np = w_per_filt_relu.numpy().flatten().tolist()
         
         replacement_true_lst.extend([outcome_bin] * num_filters)
-        max_w_filt_lst.extend(max_w_per_filt_relu_np)
+        max_w_filt_lst.extend(w_per_filt_relu_np)
 
     # filt_nums list should be extended `num_patients` times.
     filt_nums = filt_nums * num_patients
