@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 import math
 
 
-def generate_filt_sequences(stride:int, filter_size:int, feature_map_size:int):
+def generate_filt_sequences(stride:int, filter_size:int, feature_map_size:int) -> list:
     """Return a list of indices that the filter covers in one step. e.g. if the filter is
     size 4 and the stride is one the indices cover timesteps [1,2,3,4] at step one, then 
     [2,3,4,5] at step two...
@@ -45,7 +45,7 @@ def find_indices_of_value(list_of_lists, value):
     return [index for index, sublist in enumerate(list_of_lists) if value in sublist]
 
 
-def calc_local_map(model, grads:tf.Tensor, filt_num:int=None) -> np.array:
+def calc_local_map(model, grads:tf.Tensor, only_pos:bool=True, filt_num:int=None) -> np.array:
     """Calculate the graph-Grad-CAM localisation map by performing global
     average pooling to get the weightings for each filter, then get the weighted 
     activation map before passing this through a ReLU to only focus on features 
@@ -57,6 +57,8 @@ def calc_local_map(model, grads:tf.Tensor, filt_num:int=None) -> np.array:
         model (tf.model): trained TG-CNN model.
         grads (tf.Tensor): gradients from the TG-CNN model, the CNN output with
                         respect to the model output.
+        only_pos (bool): if True then use ReLU to focus only on features with a positive
+                        influence on the class, otherwise get the absolute values.
         filt_num (int): filter number to get the value of, if None then use all.
 
     Returns:
@@ -87,8 +89,7 @@ def calc_local_map(model, grads:tf.Tensor, filt_num:int=None) -> np.array:
         weighted_f_maps = alphak_tf*f_map_branch1
         weighted_f_map = tf.reduce_sum(weighted_f_maps, axis=0)
 
-        # ReLU as we only are interested in the features that have a positive influence of the class of interest
-        l_map = np.array(tf.nn.relu(weighted_f_map))
+
     else:
         filt_grads = grads[0, filt_num]
         filt_grad_sum = tf.reduce_sum(filt_grads)
@@ -98,9 +99,12 @@ def calc_local_map(model, grads:tf.Tensor, filt_num:int=None) -> np.array:
         alphak_tf = tf.constant(alpha_k, dtype=tf.float32)
         weighted_f_map = alphak_tf*f_map_branch1[filt_num]
 
+    if only_pos:
         # ReLU as we only are interested in the features that have a positive influence of the class of interest
         l_map = np.array(tf.nn.relu(weighted_f_map))
-
+    else:
+        # Get absolute values instead of ReLU as model is binary and negative weights may also have important insights
+        l_map = np.array(tf.abs(weighted_f_map))
 
     return l_map
 
@@ -173,10 +177,10 @@ def map_read_code_labels(pos_df:pd.DataFrame, read_code_map_df:pd.DataFrame, tim
     read_code_pos_df = read_code_pos_df.merge(timestep_ave_grad_df, on='x', how='left')
 
     # # normalise (min-max) the timestep_ave_grad column (needed as not all of the timesteps are used and should give better y axis values)
-    # read_code_pos_df['norm_timestep_ave_grad'] = (read_code_pos_df['timestep_ave_grad'] - read_code_pos_df['timestep_ave_grad'].min()) / (read_code_pos_df['timestep_ave_grad'].max() - read_code_pos_df['timestep_ave_grad'].min())
+    # read_code_pos_df['perc_timestep_infl'] = (read_code_pos_df['timestep_ave_grad'] - read_code_pos_df['timestep_ave_grad'].min()) / (read_code_pos_df['timestep_ave_grad'].max() - read_code_pos_df['timestep_ave_grad'].min())
     
     # Return the percentage contribution of each timestep so all timestep values sum to 1
-    read_code_pos_df['norm_timestep_ave_grad'] = (read_code_pos_df['timestep_ave_grad'] / read_code_pos_df['timestep_ave_grad'].sum())*100
+    read_code_pos_df['perc_timestep_infl'] = (read_code_pos_df['timestep_ave_grad'] / read_code_pos_df['timestep_ave_grad'].sum())*100
     
     return read_code_pos_df
 
@@ -203,7 +207,7 @@ def create_edge_pos_df(edges_df:pd.DataFrame, pos_df:pd.DataFrame):
 
 def text_color_mapping(numbers):
     # Map the text colour based on the colour of the node so that it can be read
-    return ['black' if num < 0.5 else 'white' for num in numbers]
+    return ['black' if num < 50 else 'white' for num in numbers]
 
 def plot_gradcam_plotly(edge_pos_df:pd.DataFrame, pos_df:pd.DataFrame, read_code_pos_df:pd.DataFrame,
                         years_in_advance:str, logits:tf.Tensor, outcome:str, filename:str):
@@ -238,7 +242,7 @@ def plot_gradcam_plotly(edge_pos_df:pd.DataFrame, pos_df:pd.DataFrame, read_code
     node_labels = read_code_pos_df['ReadCode'].tolist()
     node_hover_text = read_code_pos_df['ReadCode_descript'].tolist()
 
-    text_colors = text_color_mapping(read_code_pos_df['norm_timestep_ave_grad'].to_list())
+    text_colors = text_color_mapping(read_code_pos_df['perc_timestep_infl'].to_list())
 
     # Create node_trace with static labels and hover text
     node_trace = go.Scatter(
@@ -264,12 +268,14 @@ def plot_gradcam_plotly(edge_pos_df:pd.DataFrame, pos_df:pd.DataFrame, read_code
                 xanchor='left',
                 titleside='right'
             ),
-            line_width=2
+            line_width=2,
+            cmin=0, # min of colorbar to be 0
+            cmax=100 # max of colorbar to be 100
         ),
         hovertext=node_hover_text
     )
 
-    node_colors = read_code_pos_df['norm_timestep_ave_grad'].to_list()
+    node_colors = read_code_pos_df['perc_timestep_infl'].to_list()
 
     # This shouldn't happen if we don't normalise
     # if True in np.isnan(np.array(node_colors)):
