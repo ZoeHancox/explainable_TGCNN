@@ -4,6 +4,8 @@ import pandas as pd
 import tensorflow as tf
 from src import utils
 import matplotlib.pyplot as plt
+import plotly.graph_objects as go
+import plotly.io as pio
 
 
 def get_act_metric_per_feat(model, num_filters:int, num_patients:int, pat_df:pd.DataFrame, 
@@ -124,3 +126,48 @@ def act_diff(replacement_true_lst:list, max_w_filt_lst:list, filt_nums:list):
     plt.show()
 
     return mean_activation_df
+
+
+def map_read_code_labels(pos_df:pd.DataFrame, read_code_map_df:pd.DataFrame) -> pd.DataFrame:
+    """Map the Read Codes and descrptions to the node numbers.
+
+    Args:
+        pos_df (pd.DataFrame): DataFrame providing positions for nodes.
+        read_code_map_df (pd.DataFrame): DataFrame with the node numbers, Read Codes and descriptions.
+
+    Returns:
+        pd.DataFrame: DataFrame with node positions and labels.
+    """
+    # Extract the numeric part from the 'node' column in pos_df
+    pos_df['node_num'] = pos_df['node'].str.extract('(\d+)').astype(int)
+
+    read_code_pos_df = pos_df.merge(read_code_map_df, on='node_num', how='left')
+
+    # # Return the percentage contribution of each timestep so all timestep values sum to 1
+    # read_code_pos_df['perc_timestep_infl'] = (read_code_pos_df['timestep_ave_grad'] / read_code_pos_df['timestep_ave_grad'].sum())*100
+    
+    return read_code_pos_df
+
+def create_edge_pos_df(edges_df:pd.DataFrame, pos_df:pd.DataFrame):
+    """Merged the edges_df and pos_df to get the coordinates for the edges.
+
+    Args:
+        edges_df (pd.DataFrame): DataFrame with columns start_node, end_node and time_between.
+        pos_df (pd.DataFrame): DataFrame with columns: node	x, cumulative_count, max_codes_per_visit, y, node_num.
+
+    Returns:
+        pd.DataFrame: DataFrame with edge coordinates included.
+    """
+    # merge edges_df with pos_df on start_node to get x0 and y0
+    edge_pos_df = edges_df.merge(pos_df, how='left', left_on='start_node', right_on='node')
+    edge_pos_df = edge_pos_df.rename(columns={'x': 'x0', 'y': 'y0'}).drop(columns=['node', 'cumulative_count', 'max_codes_per_visit'])
+
+    # merge the result with pos_df again on end_node to get x1 and y1
+    edge_pos_df = edge_pos_df.merge(pos_df, how='left', left_on='end_node', right_on='node')
+    edge_pos_df = edge_pos_df.rename(columns={'x': 'x1', 'y': 'y1'}).drop(columns=['node', 'cumulative_count', 'max_codes_per_visit'])
+
+    edge_pos_df['edge_weight_perc'] = (edge_pos_df['edge_weights']/edge_pos_df['edge_weights'].sum())*100
+    return edge_pos_df
+
+
+

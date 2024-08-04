@@ -28,7 +28,7 @@ def create_edges_df_gc(patient_graph:np.array):
         non_zero_values.append(patient_graph[t, i, j])
     #print("Non-zero values", non_zero_values)
     if not non_zero_values:
-        print("Error: Subgraph does not contain any values.")
+        print("Error: Graph does not contain any values.")
 
     # Calculate start_node_v and end_node_v
     start_node_v = np.where(t_indices == 0, 0, t_indices)
