@@ -4,8 +4,10 @@ import pandas as pd
 import tensorflow as tf
 from src import utils
 import matplotlib.pyplot as plt
+import matplotlib.colors as mcolors
 import plotly.graph_objects as go
 import plotly.io as pio
+import numpy as np
 
 
 def get_act_metric_per_feat(model, num_filters:int, num_patients:int, pat_df:pd.DataFrame, 
@@ -170,4 +172,132 @@ def create_edge_pos_df(edges_df:pd.DataFrame, pos_df:pd.DataFrame):
     return edge_pos_df
 
 
+def plot_edge_act_plotly(edge_pos_df:pd.DataFrame, pos_df:pd.DataFrame, read_code_pos_df:pd.DataFrame,
+                        years_in_advance:str, logits:tf.Tensor, outcome:str, filename:str):
+    """Create plotly graph that colors the edges depending on how much influence the connecting Read Codes 
+    have on model prediction.
 
+    Args:
+        edge_pos_df (pd.DataFrame): _description_
+        pos_df (pd.DataFrame): _description_
+        read_code_pos_df (pd.DataFrame): _description_
+        years_in_advance (str): _description_
+        logits (tf.Tensor): _description_
+        outcome (str): _description_
+        filename (str): Name to save the file as, this is suffixed with '_plot.html'.
+    """
+    cmap = plt.cm.viridis_r
+    edge_influ_perc = (edge_pos_df['edge_weight_perc']/100).tolist()
+    # Map each percentage to a color in the reversed Viridis colormap (larger numbers = darker)
+    edge_colors = [cmap(p) for p in edge_influ_perc]
+    
+    # Convert RGBA colors to hex format
+    edge_hex_colors = [mcolors.to_hex(color) for color in edge_colors]
+    
+    edge_traces = []
+    for i, row in edge_pos_df.iterrows():
+        edge_trace = go.Scatter(
+        x=[row['x0'], row['x1'], None],
+        y=[row['y0'], row['y1'], None],
+        line=dict(
+            width=8,
+            color=edge_hex_colors[i],  # Map colors directly
+            #colorscale='Viridis',  # Use a predefined colorscale
+        ),
+        hoverinfo='none',  # Disable hover info for lines
+        mode='lines'
+        )
+        edge_traces.append(edge_trace)
+
+    node_x = pos_df['x'].tolist()
+    node_y = pos_df['y'].tolist()
+    node_labels = read_code_pos_df['ReadCode'].tolist()
+    node_hover_text = read_code_pos_df['ReadCode_descript'].tolist()
+
+    # Create node trace with a single, uniform color
+    node_trace = go.Scatter(
+        x=node_x,
+        y=node_y,
+        mode='markers+text',
+        text=node_labels,  # Static labels for nodes
+        textposition='middle center',
+        textfont=dict(
+            size=10,
+            color='black'  # Set color for text
+        ),
+        hoverinfo='text',
+        marker=dict(
+            showscale=True,
+            colorscale='Viridis',
+            reversescale=True,
+            color='white',
+            size=45,
+            colorbar=dict(
+                thickness=15,
+                title='Influence Visit Had on Risk Prediction (%)',
+                xanchor='left',
+                titleside='right'
+            ),
+            line_width=1,
+            cmin=0, # min of colorbar to be 0
+            cmax=100 # max of colorbar to be 100
+        ),
+        hovertext=node_hover_text
+    )
+
+
+    cmap = plt.cm.Greys_r
+    edge_influ_perc = (edge_pos_df['edge_weight_perc']/100).tolist()
+    edge_text_colors = [cmap(p) for p in edge_influ_perc]
+    edge_text_hex_colors = [mcolors.to_hex(color) for color in edge_text_colors]
+
+    # Calculate midpoints for edge label annotations
+    annotations = []
+    for i, row in edge_pos_df.iterrows():
+        mid_x = (row['x0'] + row['x1']) / 2
+        mid_y = (row['y0'] + row['y1']) / 2
+        annotations.append(
+            dict(
+                x=mid_x,
+                y=mid_y,
+                text=f"{int(round(row['time_between'] * 30.4167, 0))} days",
+                showarrow=False,
+                font=dict(size=10, color=edge_text_hex_colors[i]),
+                align="center"
+            )
+        )
+
+    # Determine the outcome text
+    if outcome == 'hip':
+        true_out = 'A hip replacement was needed.'
+    else:
+        true_out = 'A hip replacement was not needed.'
+
+    proba_of_replace = 1 / (1 + np.exp(logits))  # use sigmoid to convert logits to probs
+
+    # Add final annotation with the model prediction
+    annotations.append(dict(
+        text=f"The model predicts the probability of this patient needing a replacement is {round(proba_of_replace.item() * 100, 2)}%. \nThe patient's true outcome: {true_out}",
+        showarrow=False,
+        xref="paper", yref="paper",
+        x=0.005, y=-0.002
+    ))
+
+
+    edge_traces.append(node_trace)
+    # Create the figure
+    fig = go.Figure(data=edge_traces,                
+                    layout=go.Layout(
+                        title=f'Graph Visualisation of Patients Pathway and Connections Associated to Hip Replacement - Stream 1.',
+                        titlefont_size=16,
+                        showlegend=False,
+                        hovermode='closest',
+                        margin=dict(b=15, l=10, r=5, t=50),
+                        annotations=annotations,
+                        xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+                        yaxis=dict(showgrid=False, zeroline=False, showticklabels=False))
+                    )
+
+    # Save the figure to an HTML file and display it
+    pio.write_html(fig, file=filename + "_plot.html", auto_open=True)
+    fig.show()
