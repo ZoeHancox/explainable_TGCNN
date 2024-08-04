@@ -171,3 +171,7 @@ cython_debug/
 # Predictor and probability values
 *.npy
 
+# other random files to ignore
+hip_1999_to_one_year_advance_model1_CNN_layer_temp/part-00000-of-00001.data-00000-of-00001.tempstate1314186509813749546
+documentation/pat_graph.png
+documentation/pat_graph_stream2.png
