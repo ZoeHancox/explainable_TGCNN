@@ -442,7 +442,7 @@ def plot_edge_act_plotly(edge_pos_df:pd.DataFrame, pos_df:pd.DataFrame, read_cod
             size=45,
             colorbar=dict(
                 thickness=15,
-                title='Influence Visit Had on Risk Prediction (%)',
+                title='Influence Read Codes Had on Risk Prediction (%)',
                 xanchor='left',
                 titleside='right'
             ),
@@ -485,22 +485,40 @@ def plot_edge_act_plotly(edge_pos_df:pd.DataFrame, pos_df:pd.DataFrame, read_cod
 
     # Add final annotation with the model prediction
     annotations.append(dict(
-        text=f"The model predicts the probability of this patient needing a replacement is {round(proba_of_replace.item() * 100, 2)}%. \nThe patient's true outcome: {true_out}",
-        showarrow=False,
-        xref="paper", yref="paper",
-        x=0.005, y=-0.002
-    ))
+                        text=(
+                            f"The models predicts the probability of this patient needing a replacement is {round(proba_of_replace.item()*100,2)}%.<br>"
+                            f"The patient's true outcome: {true_out}"),
+                        showarrow=False,
+                        xref="paper", yref="paper",
+                        x=0.5, y=-0.002 ))
+    
+    annotations.append(dict(
+                        text=("Most Recent"),
+                        showarrow=False,
+                        xref="paper", yref="paper",
+                        x=0.95, y=0.95 ))
+    annotations.append(dict(
+                        text=("Most Distant"),
+                        showarrow=False,
+                        xref="paper", yref="paper",
+                        x=0.05, y=0.95 ))
+    
+    annotations.append(dict(
+                        text=("------------------------------------>"),
+                        showarrow=False,
+                        xref="paper", yref="paper",
+                        x=0.5, y=0.95))    
 
 
     edge_traces.append(node_trace)
     # Create the figure
     fig = go.Figure(data=edge_traces,                
                     layout=go.Layout(
-                        title=f'Graph Visualisation of Patients Pathway and Connections Associated to Hip Replacement - Stream 1.',
-                        titlefont_size=16,
+                        title=f"Patient Pathway Graph and Influence on Model Prediction.",
+                        titlefont_size=14,
                         showlegend=False,
                         hovermode='closest',
-                        margin=dict(b=15, l=10, r=5, t=50),
+                        margin=dict(b=15, l=10, r=5, t=40),
                         annotations=annotations,
                         xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
                         yaxis=dict(showgrid=False, zeroline=False, showticklabels=False))
