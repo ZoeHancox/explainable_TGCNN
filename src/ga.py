@@ -193,6 +193,70 @@ def get_and_reshape_filt(filters_4d:np.array, max_act_filt_num:int) -> tf.Tensor
     f = tf.transpose(f, perm=[2, 1, 0]) # reorder filter
     return f
 
+def filt_times_pat(f:tf.Tensor, dense_tensor:tf.Tensor, filter_size:int, max_timesteps:int, stride:int) -> tf.Tensor:
+    """Get the filter element-wise multiplied by the patient graph, with a sliding window taking the mean 
+    of each pass.
+
+    Args:
+        f (tf.Tensor): filter from 3D CNN.
+        dense_tensor (tf.Tensor): patient 3D tensor representing graph.
+        filter_size (int): number of timesteps in the 3D CNN filter.
+        max_timesteps (int): number of timesteps covered by the patient graph.
+        stride (int): return error if the stride is not 1.
+
+    Returns:
+        tf.Tensor: Edge activated patient graph.
+    """
+    if stride != 1:
+        raise ValueError(f"This calculation requires the filter stride to be 1, you've supplied a stride of {stride}.")
+    # First sort the middle of the pat graph which has all the filter timesteps passing over
+    tensors = []
+    for t in range(filter_size):
+        graph_ends = max_timesteps-2*(filter_size-1)
+        f_repeat = tf.repeat(tf.expand_dims(f[t,:,:], axis=0), repeats=graph_ends, axis=0) # times by two for both ends
+        mid_graph = f_repeat * dense_tensor[filter_size-1:max_timesteps-filter_size+1, :, :]
+        tensors.append(mid_graph)
+
+    stacked_tensors = tf.stack(tensors, axis=0)
+    mean_tensor_mid = tf.reduce_mean(stacked_tensors, axis=0)  
+
+
+    # sort out the parts of the graph where they don't have the full filter pass over them
+    # BEGINNING FIRST
+    num_to_append = filter_size - 1
+
+    # Generate slices_indices dynamically
+    slices_indices = []
+    for i in range(num_to_append):
+        indices = list(range(min(f.shape[0], num_to_append - i)))
+        indices.append(filter_size - 2 - i)  # Add the corresponding index for patient graph
+        slices_indices.append(indices)
+
+    # calculate the means
+    for indices in slices_indices:
+        # Perform element-wise multiplication and compute the mean
+        multiplied_slices = [f[i, :, :] * dense_tensor[indices[-1], :, :] for i in indices[:-1]]
+        mean_value = tf.reduce_mean(multiplied_slices, axis=0)
+        mean_tensor_mid = tf.concat([tf.expand_dims(mean_value, axis=0), mean_tensor_mid], axis=0)
+
+    # END NEXT
+    base_list = list(range(1, filter_size))
+    negative_numbers = [-i for i in range(len(base_list), 0, -1)]
+
+    slices_indices = []
+    for i in range(len(base_list)):
+        sublist = base_list[i:] + [negative_numbers[i]]
+        slices_indices.append(sublist)
+
+    # calculate the means
+    for indices in slices_indices:
+        # Perform element-wise multiplication and compute the mean
+        multiplied_slices = [f[i, :, :] * dense_tensor[indices[-1], :, :] for i in indices[:-1]]
+        mean_value = tf.reduce_mean(multiplied_slices, axis=0)
+        # Add the tensor to the end of the mid tensor
+        mean_tensor_mid = tf.concat([mean_tensor_mid, tf.expand_dims(mean_value, axis=0)], axis=0)
+
+    return mean_tensor_mid
 
 def map_read_code_labels(pos_df:pd.DataFrame, read_code_map_df:pd.DataFrame) -> pd.DataFrame:
     """Map the Read Codes and descrptions to the node numbers.
