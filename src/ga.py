@@ -176,6 +176,23 @@ def make_filts_4d(filters:tf.Tensor, filter_size:int, max_event_codes:int) -> np
     filters_4d = np.array(filters_4d) 
     return filters_4d
 
+def get_and_reshape_filt(filters_4d:np.array, max_act_filt_num:int) -> tf.Tensor:
+    """Take the filters and select the filter with the highest activation and reshape to match 
+    the patient graph direction i.e. most recent events on the right.
+
+    Args:
+        filters_4d (np.array): 4D stack of 3D filters.
+        max_act_filt_num (int): filter number with the highest activation difference between the two classes.
+
+    Returns:
+        tf.Tensor: single filter with the same ordering as the patient graph tensor.
+    """
+    # get the filter with the largest activation difference between classes
+    max_act_filt = filters_4d[max_act_filt_num-1] # minus 1 as we don't have a filter called 0
+    f = np.flip(max_act_filt, axis=0) # flip the filter so the most recent event is at the end rather than the start
+    f = tf.transpose(f, perm=[2, 1, 0]) # reorder filter
+    return f
+
 
 def map_read_code_labels(pos_df:pd.DataFrame, read_code_map_df:pd.DataFrame) -> pd.DataFrame:
     """Map the Read Codes and descrptions to the node numbers.
