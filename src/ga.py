@@ -143,6 +143,39 @@ def find_max_act_filt(mean_activation_df:pd.DataFrame) -> int:
     filt_num = mean_activation_df.loc[max_idx, 'Filter']
     return filt_num
 
+def make_filts_4d(filters:tf.Tensor, filter_size:int, max_event_codes:int) -> np.array:
+    """Take the flattened filters from the model and convert them to 4D for matrix multiplication 
+    with patient graphs. 
+
+    Args:
+        filters (tf.Tensor): 2D flattened filters.
+        filter_size (int): size of the 3D CNN filters.
+        max_event_codes (int): number of nodes/event codes in the model.
+
+    Returns:
+        np.array: 4D 3D CNN filters, each filter is 3D and stacked together into 4D.
+    """
+    filters_trans = tf.transpose(filters, [1,0]) # change filters to have one 2D array per filter rather than splitting the array 
+
+    filters_4d = []
+    for f in filters_trans:   
+        filters_3d=[]
+        #loop through one z/timestep at a time
+        for i in range(filter_size):
+            # Select numbers for the current tensor
+            selected_numbers = f[i::filter_size]
+            # Convert the selected numbers into a NumPy array and reshape it to a tensor
+            oned_tensor = np.array(selected_numbers)#.reshape(-1, 1)
+            tensor = oned_tensor.reshape(max_event_codes, max_event_codes)
+            filters_3d.append(np.array(tensor))
+            
+        filters_3d = np.array(filters_3d)
+        filters_3d = filters_3d.reshape(max_event_codes,max_event_codes,filter_size)
+        filters_4d.append(filters_3d)
+
+    filters_4d = np.array(filters_4d) 
+    return filters_4d
+
 
 def map_read_code_labels(pos_df:pd.DataFrame, read_code_map_df:pd.DataFrame) -> pd.DataFrame:
     """Map the Read Codes and descrptions to the node numbers.
