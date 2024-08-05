@@ -178,7 +178,7 @@ def choose_feat_map(model, fm_type:str, mean_activation_df:pd.DataFrame) -> np.a
         )
     elif fm_type == 'largest':
         filt_num = find_max_act_filt(mean_activation_df)
-        comb_f_maps = f_maps[filt_num+1] # plus 1 as we don't have a filter called 0
+        comb_f_maps = f_maps[filt_num-1] # minus 1 as we don't have a filter called 0
 
     return np.array(comb_f_maps)
 
