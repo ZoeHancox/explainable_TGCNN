@@ -143,6 +143,46 @@ def find_max_act_filt(mean_activation_df:pd.DataFrame) -> int:
     filt_num = mean_activation_df.loc[max_idx, 'Filter']
     return filt_num
 
+def choose_feat_map(model, fm_type:str, mean_activation_df:pd.DataFrame) -> np.array:
+    """Get mean or median of feature maps combined or get the feature map with the highest 
+    difference in activation between the two classes.
+
+    Args:
+        model (tf.Model): trained TG-CNN model.
+        fm_type (str): which operation to perform to get the activation map to use for the weights.
+        mean_activation_df (pd.DataFrame): dataframe with the difference in activation for each filter and class.
+
+    Returns:
+        np.array: activation map to use for the graph visual weights.
+    """
+    
+    #  get the feature maps
+    f_maps = tf.squeeze(model.f_map_branch1)
+    # get the average or median across the feature maps
+    if fm_type == 'mean':
+        comb_f_maps = tf.reduce_sum(f_maps, axis=0)
+    elif fm_type == 'median': # if the violin plots are not normally distributed then take the median
+        x_sorted = tf.sort(f_maps, axis=2)
+        n = x_sorted.shape[2]
+
+        # Calculate the median index
+        middle = n // 2
+
+        # Compute the median along the specified axis
+        # If the size of the axis is odd, take the middle element
+        # If even, average the two middle elements
+        comb_f_maps = tf.cond(
+            tf.equal(n % 2, 1),
+            lambda: tf.gather(x_sorted, middle, axis=2),
+            lambda: tf.reduce_mean(tf.gather(x_sorted, [middle - 1, middle], axis=2), axis=2)
+        )
+    elif fm_type == 'largest':
+        filt_num = find_max_act_filt(mean_activation_df)
+        comb_f_maps = f_maps[filt_num+1] # plus 1 as we don't have a filter called 0
+
+    return np.array(comb_f_maps)
+
+
 def make_filts_4d(filters:tf.Tensor, filter_size:int, max_event_codes:int) -> np.array:
     """Take the flattened filters from the model and convert them to 4D for matrix multiplication 
     with patient graphs. 
@@ -188,7 +228,7 @@ def get_and_reshape_filt(filters_4d:np.array, max_act_filt_num:int) -> tf.Tensor
         tf.Tensor: single filter with the same ordering as the patient graph tensor.
     """
     # get the filter with the largest activation difference between classes
-    max_act_filt = filters_4d[max_act_filt_num-1] # minus 1 as we don't have a filter called 0
+    max_act_filt = filters_4d[max_act_filt_num+1] # plus 1 as we don't have a filter called 0
     f = np.flip(max_act_filt, axis=0) # flip the filter so the most recent event is at the end rather than the start
     f = tf.transpose(f, perm=[2, 1, 0]) # reorder filter
     return f
