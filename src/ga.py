@@ -196,6 +196,9 @@ def get_and_reshape_filt(filters_4d:np.array, max_act_filt_num:int) -> tf.Tensor
 def filt_times_pat(f:tf.Tensor, dense_tensor:tf.Tensor, filter_size:int, max_timesteps:int, stride:int) -> tf.Tensor:
     """Get the filter element-wise multiplied by the patient graph, with a sliding window taking the mean 
     of each pass.
+    This is the element-wise multiplication between the slices of the filter and the patient graph
+    with the mean for each group of operations.
+    The values in this tensor should be used for the edge weightings.
 
     Args:
         f (tf.Tensor): filter from 3D CNN.
@@ -257,6 +260,43 @@ def filt_times_pat(f:tf.Tensor, dense_tensor:tf.Tensor, filter_size:int, max_tim
         mean_tensor_mid = tf.concat([mean_tensor_mid, tf.expand_dims(mean_value, axis=0)], axis=0)
 
     return mean_tensor_mid
+
+def create_edges_df_ga(patient_graph:np.array, edge_w_graph:tf.Tensor) -> pd.DataFrame:
+    """Create a DataFrame of the edges of the patient graph, including the start and end nodes, the time 
+    between visits, and the edge weight. For edge activation model.
+
+    Args:
+        patient_graph (np.array): 3D numpy array showing the patients health codes over time.
+        edge_w_graph (tf.Tensor): 
+
+    Returns:
+        DataFrame: with columns start_node, end_node, time_between.
+    """
+
+    # Get the indices of non-zero elements
+    patient_graph = np.round(patient_graph.numpy(), 4)
+    edge_w_graph = np.array(edge_w_graph)
+    t_indices, i_indices, j_indices = np.nonzero(patient_graph)
+    non_zero_values = []
+    edge_weights = []
+    for t, i, j in zip(t_indices, i_indices, j_indices):
+        non_zero_values.append(patient_graph[t, i, j])
+        edge_weights.append(np.maximum(0, edge_w_graph[t, i, j])) # maximum compares 0 to value and gives a ReLU return
+    if not non_zero_values:
+        print("Error: Graph does not contain any values.")
+
+    # Calculate start_node_v and end_node_v
+    start_node_v = np.where(t_indices == 0, 0, t_indices)
+    end_node_v = start_node_v + 1
+
+    edges_df = pd.DataFrame({
+        'start_node': [f'{i}_v{start_v}' for i, start_v in zip(i_indices, start_node_v)],
+        'end_node': [f'{j}_v{end_v}' for j, end_v in zip(j_indices, end_node_v)],
+        'time_between': non_zero_values,
+        'edge_weights': edge_weights
+    })
+    
+    return edges_df
 
 def map_read_code_labels(pos_df:pd.DataFrame, read_code_map_df:pd.DataFrame) -> pd.DataFrame:
     """Map the Read Codes and descrptions to the node numbers.
