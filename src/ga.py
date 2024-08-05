@@ -129,6 +129,20 @@ def act_diff(replacement_true_lst:list, max_w_filt_lst:list, filt_nums:list):
 
     return mean_activation_df
 
+def find_max_act_filt(mean_activation_df:pd.DataFrame) -> int:
+    """Find the filter which has the largest activation difference between the two classes.
+
+    Args:
+        mean_activation_df (pd.DataFrame): df containing the difference in activation between classes 
+                                        for each filter.
+
+    Returns:
+        int: filter number with the largest activation difference.
+    """
+    max_idx = mean_activation_df['Difference'].idxmax()
+    filt_num = mean_activation_df.loc[max_idx, 'Filter']
+    return filt_num
+
 
 def map_read_code_labels(pos_df:pd.DataFrame, read_code_map_df:pd.DataFrame) -> pd.DataFrame:
     """Map the Read Codes and descrptions to the node numbers.
