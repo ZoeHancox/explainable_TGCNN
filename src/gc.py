@@ -321,10 +321,11 @@ def plot_gradcam_plotly(edge_pos_df:pd.DataFrame, pos_df:pd.DataFrame, read_code
     # else:
     #     model_pred = 'will not need a hip replacement'
     # out_print = f"The model predicts that this person {model_pred} in {years_in_advance} years time."
-        
+    # print(logits)
+    # print(tf.squeeze(proba_of_replace).numpy())    
     annotations.append(dict(
                         text=(
-                            f"The models predicts the probability of this patient needing a replacement is {round(proba_of_replace*100,2)}%.<br>"
+                            f"The models predicts the probability of this patient needing a replacement is {round(tf.squeeze(proba_of_replace).numpy()*100,2)}%.<br>"
                             f"The patient's true outcome: {true_out}"),
                         showarrow=False,
                         xref="paper", yref="paper",
