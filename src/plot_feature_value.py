@@ -3,7 +3,7 @@ import tensorflow as tf
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-def plot_ave_grad_all_f_maps(grads: tf.Tensor):
+def plot_ave_grad_all_f_maps(grads: tf.Tensor, title:str='Average Gradient of All Feature Maps', ylab:str='Normalised Mean Gradient Value'):
     """Plot the average gradient of all feature maps.
 
     Args:
@@ -23,13 +23,13 @@ def plot_ave_grad_all_f_maps(grads: tf.Tensor):
     #norm_features = mean_features/np.sum(mean_features)
 
     plt.plot(norm_features)
-    plt.title("Average Gradient of All Feature Maps")
-    plt.xlabel("Feature Map Length")
-    plt.ylabel("Normalised Mean Gradient Value")
+    plt.title(title)
+    plt.xlabel("Feature Map Index")
+    plt.ylabel(ylab)
     plt.show()
     return norm_features
 
-def plot_indv_grad_f_maps(grads: tf.Tensor):
+def plot_indv_grad_f_maps(grads: tf.Tensor, title:str='Gradient of Each Feature Map', ylab:str='Normalised Mean Gradient Value'):
 
     plt.figure(figsize=(12, 10))
     for map in range(grads.shape[1]):
@@ -40,9 +40,9 @@ def plot_indv_grad_f_maps(grads: tf.Tensor):
 
         plt.plot(norm_grads, label=f'Feature Map {map}')
 
-    plt.title("Gradient of Each Feature Map")
-    plt.xlabel("Feature Map Length")
-    plt.ylabel("Normalized Mean Gradient Value")
+    plt.title(title)
+    plt.xlabel("Feature Map Index")
+    plt.ylabel(ylab)
     plt.legend(loc='upper left')  # This will automatically use the labels specified in plt.plot
     plt.show()
 
