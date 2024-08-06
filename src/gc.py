@@ -306,7 +306,7 @@ def plot_gradcam_plotly(edge_pos_df:pd.DataFrame, pos_df:pd.DataFrame, read_code
         out_print = f'It is unlikely this patient will need a hip replacement in {years_in_advance} years time.'
     stream_num = '1'
 
-    proba_of_replace = tf.round(tf.nn.sigmoid(logits))
+    proba_of_replace = tf.nn.sigmoid(logits)
     #proba_of_replace = 1/ (1+np.exp(logits)) # use sigmoid to convert logits to probs
     
     # if ((proba_of_replace.item() > 0.5) and (outcome != 'hip')) or ((proba_of_replace.item()) < 0.5) and (outcome == 'hip'):

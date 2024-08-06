@@ -481,7 +481,7 @@ def plot_edge_act_plotly(edge_pos_df:pd.DataFrame, pos_df:pd.DataFrame, read_cod
     else:
         true_out = 'A hip replacement was not needed.'
 
-    proba_of_replace = tf.round(tf.nn.sigmoid(logits))
+    proba_of_replace = tf.nn.sigmoid(logits)
     #proba_of_replace = 1 / (1 + np.exp(logits))  # use sigmoid to convert logits to probs
 
     # Add final annotation with the model prediction
