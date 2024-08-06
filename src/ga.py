@@ -228,7 +228,7 @@ def get_and_reshape_filt(filters_4d:np.array, max_act_filt_num:int) -> tf.Tensor
         tf.Tensor: single filter with the same ordering as the patient graph tensor.
     """
     # get the filter with the largest activation difference between classes
-    max_act_filt = filters_4d[max_act_filt_num+1] # plus 1 as we don't have a filter called 0
+    max_act_filt = filters_4d[max_act_filt_num-1] # minus 1 as we don't have a filter called 0
     f = np.flip(max_act_filt, axis=0) # flip the filter so the most recent event is at the end rather than the start
     f = tf.transpose(f, perm=[2, 1, 0]) # reorder filter
     return f
