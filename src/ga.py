@@ -314,7 +314,7 @@ def create_edges_df_ga(patient_graph:np.array, edge_w_graph:tf.Tensor) -> pd.Dat
     """
 
     # Get the indices of non-zero elements
-    patient_graph = np.round(patient_graph.numpy(), 4)
+    patient_graph = patient_graph.numpy()
     edge_w_graph = np.array(edge_w_graph)
     t_indices, i_indices, j_indices = np.nonzero(patient_graph)
     non_zero_values = []
