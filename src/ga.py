@@ -481,12 +481,13 @@ def plot_edge_act_plotly(edge_pos_df:pd.DataFrame, pos_df:pd.DataFrame, read_cod
     else:
         true_out = 'A hip replacement was not needed.'
 
-    proba_of_replace = 1 / (1 + np.exp(logits))  # use sigmoid to convert logits to probs
+    proba_of_replace = tf.round(tf.nn.sigmoid(logits))
+    #proba_of_replace = 1 / (1 + np.exp(logits))  # use sigmoid to convert logits to probs
 
     # Add final annotation with the model prediction
     annotations.append(dict(
                         text=(
-                            f"The models predicts the probability of this patient needing a replacement is {round(proba_of_replace.item()*100,2)}%.<br>"
+                            f"The models predicts the probability of this patient needing a replacement is {round(tf.squeeze(proba_of_replace).numpy()*100,2)}%.<br>"
                             f"The patient's true outcome: {true_out}"),
                         showarrow=False,
                         xref="paper", yref="paper",
