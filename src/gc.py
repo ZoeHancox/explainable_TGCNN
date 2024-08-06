@@ -101,7 +101,7 @@ def calc_local_map(model, grads:tf.Tensor, only_pos:bool=True, filt_num:int=None
 
     if only_pos:
         # ReLU as we only are interested in the features that have a positive influence of the class of interest
-        l_map = np.array(tf.nn.relu(weighted_f_map))
+        l_map = np.array(tf.nn.leaky_relu(weighted_f_map, alpha=0.00001))
     else:
         # Get absolute values instead of ReLU as model is binary and negative weights may also have important insights
         l_map = np.array(tf.abs(weighted_f_map))

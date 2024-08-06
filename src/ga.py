@@ -69,7 +69,7 @@ def get_act_metric_per_feat(model, num_filters:int, num_patients:int, pat_df:pd.
 
 
 
-        w_per_filt_relu = tf.nn.relu(w_per_filt)
+        w_per_filt_relu = tf.nn.leaky_relu(w_per_filt, alpha=0.00001)
         
         # Convert to list and extend results directly
         w_per_filt_relu_np = w_per_filt_relu.numpy().flatten().tolist()
