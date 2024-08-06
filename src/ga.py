@@ -50,7 +50,10 @@ def get_act_metric_per_feat(model, num_filters:int, num_patients:int, pat_df:pd.
         elif metric == 'mean':
             w_per_filt = tf.reduce_mean(feature_maps, axis=2)
         elif metric == 'median':
-            x_sorted = tf.sort(feature_maps, axis=2)
+            f_map_shape_1 = feature_maps.shape[1]
+            f_map_shape_2 = feature_maps.shape[2]
+            f_map_index_rows = tf.reshape(tf.transpose(feature_maps), [1, f_map_shape_2, f_map_shape_1])
+            x_sorted = tf.sort(f_map_index_rows, axis=2)
             n = x_sorted.shape[2]
 
             # Calculate the median index (integer division)
@@ -162,7 +165,11 @@ def choose_feat_map(model, fm_type:str, mean_activation_df:pd.DataFrame) -> np.a
     if fm_type == 'mean':
         comb_f_maps = tf.reduce_sum(f_maps, axis=0)
     elif fm_type == 'median': # if the violin plots are not normally distributed then take the median
-        x_sorted = tf.sort(f_maps, axis=2)
+        f_maps = model.f_map_branch1
+        f_map_shape_1 = model.f_map_branch1.shape[1]
+        f_map_shape_2 = model.f_map_branch1.shape[2]
+        f_map_index_rows = tf.reshape(tf.transpose(f_maps), [1, f_map_shape_2, f_map_shape_1])
+        x_sorted = tf.sort(f_map_index_rows, axis=2)
         n = x_sorted.shape[2]
 
         # Calculate the median index
