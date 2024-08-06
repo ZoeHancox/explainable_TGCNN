@@ -183,6 +183,7 @@ def choose_feat_map(model, fm_type:str, mean_activation_df:pd.DataFrame) -> np.a
             lambda: tf.gather(x_sorted, middle, axis=2),
             lambda: tf.reduce_mean(tf.gather(x_sorted, [middle - 1, middle], axis=2), axis=2)
         )
+        comb_f_maps = tf.squeeze(comb_f_maps)
     elif fm_type == 'largest':
         filt_num = find_max_act_filt(mean_activation_df)
         comb_f_maps = f_maps[filt_num-1] # minus 1 as we don't have a filter called 0
