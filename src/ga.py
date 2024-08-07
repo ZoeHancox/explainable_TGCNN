@@ -405,27 +405,50 @@ def plot_edge_act_plotly(edge_pos_df:pd.DataFrame, pos_df:pd.DataFrame, read_cod
         filename (str): Name to save the file as, this is suffixed with '_plot.html'.
     """
     cmap = plt.cm.viridis_r
-    edge_influ_perc = (edge_pos_df['edge_weight_perc']/100).tolist()
+    edge_influ_perc = (edge_pos_df['edge_weight_perc'] / 100).tolist()
     # Map each percentage to a color in the reversed Viridis colormap (larger numbers = darker)
     edge_colors = [cmap(p) for p in edge_influ_perc]
-    
-    # Convert RGBA colors to hex format
     edge_hex_colors = [mcolors.to_hex(color) for color in edge_colors]
-    
+
+    cmap = plt.cm.Greys_r
+    edge_text_colors = [cmap(p) for p in edge_influ_perc]
+    edge_text_hex_colors = [mcolors.to_hex(color) for color in edge_text_colors]
+
     edge_traces = []
+    midpoint_traces = []  # To store the midpoint traces
     for i, row in edge_pos_df.iterrows():
+        # Edge trace
         edge_trace = go.Scatter(
-        x=[row['x0'], row['x1'], None],
-        y=[row['y0'], row['y1'], None],
-        line=dict(
-            width=8,
-            color=edge_hex_colors[i],  # Map colors directly
-            #colorscale='Viridis',  # Use a predefined colorscale
-        ),
-        hoverinfo='none',  # Disable hover info for lines
-        mode='lines'
+            x=[row['x0'], row['x1'], None],
+            y=[row['y0'], row['y1'], None],
+            line=dict(
+                width=8,
+                color=edge_hex_colors[i],  # Map colors directly
+            ),
+            hoverinfo='none',  # Disable hover info for lines
+            mode='lines',
         )
         edge_traces.append(edge_trace)
+
+        # Midpoint trace (invisible node)
+        mid_x = (row['x0'] + row['x1']) / 2
+        mid_y = (row['y0'] + row['y1']) / 2
+        midpoint_trace = go.Scatter(
+            x=[mid_x],
+            y=[mid_y],
+            mode='markers',
+            marker=dict(
+                size=0,  # Invisible node
+                color=edge_hex_colors[i]  # Same color as edge
+            ),
+            textfont=dict(
+            size=1,
+            color='black'  # Set color for text depending on background color
+            ),
+            hoverinfo='text',  # Enable hover info for midpoint node
+            hovertext=f"Influence Read Code pair has on prediction: {round(row['edge_weight_perc'], 2)}%"
+        )
+        midpoint_traces.append(midpoint_trace)
 
     node_x = pos_df['x'].tolist()
     node_y = pos_df['y'].tolist()
@@ -457,17 +480,13 @@ def plot_edge_act_plotly(edge_pos_df:pd.DataFrame, pos_df:pd.DataFrame, read_cod
                 titleside='right'
             ),
             line_width=1,
-            cmin=0, # min of colorbar to be 0
-            cmax=100 # max of colorbar to be 100
+            cmin=0,  # min of colorbar to be 0
+            cmax=100  # max of colorbar to be 100
         ),
         hovertext=node_hover_text
     )
 
-
-    cmap = plt.cm.Greys_r
-    edge_influ_perc = (edge_pos_df['edge_weight_perc']/100).tolist()
-    edge_text_colors = [cmap(p) for p in edge_influ_perc]
-    edge_text_hex_colors = [mcolors.to_hex(color) for color in edge_text_colors]
+    
 
     # Calculate midpoints for edge label annotations
     annotations = []
@@ -492,38 +511,40 @@ def plot_edge_act_plotly(edge_pos_df:pd.DataFrame, pos_df:pd.DataFrame, read_cod
         true_out = 'A hip replacement was not needed.'
 
     proba_of_replace = tf.nn.sigmoid(logits)
-    #proba_of_replace = 1 / (1 + np.exp(logits))  # use sigmoid to convert logits to probs
 
     # Add final annotation with the model prediction
     annotations.append(dict(
-                        text=(
-                            f"The models predicts the probability of this patient needing a replacement is {round(tf.squeeze(proba_of_replace).numpy()*100,2)}%.<br>"
-                            f"The patient's true outcome: {true_out}"),
-                        showarrow=False,
-                        xref="paper", yref="paper",
-                        x=0.5, y=-0.002 ))
-    
-    annotations.append(dict(
-                        text=("Most Recent"),
-                        showarrow=False,
-                        xref="paper", yref="paper",
-                        x=0.95, y=0.95 ))
-    annotations.append(dict(
-                        text=("Most Distant"),
-                        showarrow=False,
-                        xref="paper", yref="paper",
-                        x=0.05, y=0.95 ))
-    
-    annotations.append(dict(
-                        text=("------------------------------------>"),
-                        showarrow=False,
-                        xref="paper", yref="paper",
-                        x=0.5, y=0.95))    
+        text=(
+            f"The model predicts the probability of this patient needing a replacement is {round(tf.squeeze(proba_of_replace).numpy() * 100, 2)}%.<br>"
+            f"The patient's true outcome: {true_out}"
+        ),
+        showarrow=False,
+        xref="paper", yref="paper",
+        x=0.5, y=-0.002
+    ))
 
+    annotations.append(dict(
+        text=("Most Recent"),
+        showarrow=False,
+        xref="paper", yref="paper",
+        x=0.95, y=0.95
+    ))
+    annotations.append(dict(
+        text=("Most Distant"),
+        showarrow=False,
+        xref="paper", yref="paper",
+        x=0.05, y=0.95
+    ))
 
-    edge_traces.append(node_trace)
-    # Create the figure
-    fig = go.Figure(data=edge_traces,                
+    annotations.append(dict(
+        text=("------------------------------------>"),
+        showarrow=False,
+        xref="paper", yref="paper",
+        x=0.5, y=0.95
+    ))
+
+    # Combine edge traces, midpoint traces, and node trace
+    fig = go.Figure(data=edge_traces + midpoint_traces + [node_trace],
                     layout=go.Layout(
                         title=f"Patient Pathway Graph and Influence on Model Prediction.",
                         titlefont_size=14,

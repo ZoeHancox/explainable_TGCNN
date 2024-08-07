@@ -240,7 +240,12 @@ def plot_gradcam_plotly(edge_pos_df:pd.DataFrame, pos_df:pd.DataFrame, read_code
     node_x = pos_df['x'].tolist()
     node_y = pos_df['y'].tolist()
     node_labels = read_code_pos_df['ReadCode'].tolist()
-    node_hover_text = read_code_pos_df['ReadCode_descript'].tolist()
+
+    read_code_desc_list = read_code_pos_df['ReadCode_descript'].tolist()
+    perc_infl = read_code_pos_df['perc_timestep_infl'].tolist()
+    # Add the percentage to each hover
+    node_hover_text = [f"{read_code_desc_list[i]} \nInfluence visit has on prediction: {round(perc_infl[i], 2)}%" for i in range(len(read_code_desc_list))]
+    #node_hover_text = read_code_pos_df['ReadCode_descript'].tolist()
 
     text_colors = text_color_mapping(read_code_pos_df['perc_timestep_infl'].to_list())
 
