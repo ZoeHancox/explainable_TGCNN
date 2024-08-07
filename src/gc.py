@@ -101,7 +101,8 @@ def calc_local_map(model, grads:tf.Tensor, only_pos:bool=True, filt_num:int=None
 
     if only_pos:
         # ReLU as we only are interested in the features that have a positive influence of the class of interest
-        l_map = np.array(tf.nn.leaky_relu(weighted_f_map, alpha=0.00001))
+        # Turns negative numbers into 0
+        l_map = np.array(tf.nn.relu(weighted_f_map))
     else:
         # Get absolute values instead of ReLU as model is binary and negative weights may also have important insights
         l_map = np.array(tf.abs(weighted_f_map))
@@ -180,7 +181,7 @@ def map_read_code_labels(pos_df:pd.DataFrame, read_code_map_df:pd.DataFrame, tim
     # read_code_pos_df['perc_timestep_infl'] = (read_code_pos_df['timestep_ave_grad'] - read_code_pos_df['timestep_ave_grad'].min()) / (read_code_pos_df['timestep_ave_grad'].max() - read_code_pos_df['timestep_ave_grad'].min())
     
     # Return the percentage contribution of each timestep so all timestep values sum to 1
-    read_code_pos_df['perc_timestep_infl'] = (read_code_pos_df['timestep_ave_grad'] / read_code_pos_df['timestep_ave_grad'].sum())*100
+    read_code_pos_df['perc_timestep_infl'] = (read_code_pos_df['timestep_ave_grad'] / read_code_pos_df['timestep_ave_grad'].abs().sum())*100
     
     return read_code_pos_df
 

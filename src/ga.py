@@ -72,7 +72,7 @@ def get_act_metric_per_feat(model, num_filters:int, num_patients:int, pat_df:pd.
 
 
 
-        w_per_filt_relu = tf.nn.leaky_relu(w_per_filt, alpha=0.00001)
+        w_per_filt_relu = tf.nn.relu(w_per_filt)
         
         # Convert to list and extend results directly
         w_per_filt_relu_np = w_per_filt_relu.numpy().flatten().tolist()
@@ -386,7 +386,7 @@ def create_edge_pos_df(edges_df:pd.DataFrame, pos_df:pd.DataFrame):
     edge_pos_df = edge_pos_df.merge(pos_df, how='left', left_on='end_node', right_on='node')
     edge_pos_df = edge_pos_df.rename(columns={'x': 'x1', 'y': 'y1'}).drop(columns=['node', 'cumulative_count', 'max_codes_per_visit'])
 
-    edge_pos_df['edge_weight_perc'] = (edge_pos_df['edge_weights']/edge_pos_df['edge_weights'].sum())*100
+    edge_pos_df['edge_weight_perc'] = (edge_pos_df['edge_weights']/edge_pos_df['edge_weights'].abs().sum())*100
     return edge_pos_df
 
 
