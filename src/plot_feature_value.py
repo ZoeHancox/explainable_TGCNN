@@ -58,24 +58,26 @@ def violin_plots(filt_nums:list, max_w_filt_lst:list, replacement_true_lst:list)
     plt.figure(figsize=(14,6))
 
     palette = sns.color_palette("colorblind")
-    sns.violinplot(x=filt_nums, y=max_w_filt_lst, hue=replacement_true_lst, split=True, inner="quartile", palette=palette[1:3])
+    sns.violinplot(x=filt_nums, y=max_w_filt_lst, hue=replacement_true_lst, split=True, inner="quartile", palette=palette[1:3], cut=0.5)
 
     plt.legend(title='Hip Replacement')
     plt.xlabel('Filter Number')
     plt.ylabel('Maximum Activation in Feature Map')
     plt.xlim(-1,15.5)
+    plt.savefig("feature_map_plots/violin_plots1.png", bbox_inches='tight')
     plt.show()
 
     if max(filt_nums) > 16:
         plt.figure(figsize=(14,6))
 
         palette = sns.color_palette("colorblind")
-        sns.violinplot(x=filt_nums, y=max_w_filt_lst, hue=replacement_true_lst, split=True, inner="quartile", palette=palette[1:3])
+        sns.violinplot(x=filt_nums, y=max_w_filt_lst, hue=replacement_true_lst, split=True, inner="quartile", palette=palette[1:3], cut=0.5)
 
         plt.legend(title='Hip Replacement')
         plt.xlabel('Filter Number')
         plt.ylabel('Maximum Activation in Feature Map')
         plt.xlim(15.5,31.5)
+        plt.savefig("feature_map_plots/violin_plots2.png", bbox_inches='tight')
         plt.show()
 
 
@@ -99,5 +101,16 @@ def max_act_box_plots(filt_nums:list, max_w_filt_lst:list, replacement_true_lst:
     plt.legend(title='Hip Replacement')
     plt.xlabel('Filter Number')
     plt.ylabel('Maximum Activation in Feature Map')
+    # Calculate the IQR
+    q1 = np.percentile(max_w_filt_lst, 25)
+    q3 = np.percentile(max_w_filt_lst, 75)
+    iqr = q3 - q1
+    
+    # Set y-axis limits to focus on the IQR with some padding
+    lower_bound = max(min(max_w_filt_lst), q1 - 1.5 * iqr)
+    upper_bound = min(max(max_w_filt_lst), q3 + 1.5 * iqr)
+    plt.ylim([lower_bound - 10 * iqr, upper_bound + 10 * iqr])
     # plt.xlim(-1,15.5)
+    sns.despine(trim=True)
+    plt.savefig("feature_map_plots/box_plots.png", bbox_inches='tight')
     plt.show()
