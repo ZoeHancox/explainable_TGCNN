@@ -226,22 +226,31 @@ def make_filts_4d(filters:tf.Tensor, filter_size:int, max_event_codes:int) -> np
     filters_4d = np.array(filters_4d) 
     return filters_4d
 
-def get_and_reshape_filt(filters_4d:np.array, max_act_filt_num:int) -> tf.Tensor:
+def get_and_reshape_filt(filters_4d:np.array, max_act_filt_num:int, filt_type:str) -> tf.Tensor:
     """Take the filters and select the filter with the highest activation and reshape to match 
     the patient graph direction i.e. most recent events on the right.
 
     Args:
         filters_4d (np.array): 4D stack of 3D filters.
         max_act_filt_num (int): filter number with the highest activation difference between the two classes.
+        filt_type (str): which operation to perform across the filters. Can be 'max', 'median' or 'mean'.
 
     Returns:
         tf.Tensor: single filter with the same ordering as the patient graph tensor.
     """
-    # get the filter with the largest activation difference between classes
-    max_act_filt = filters_4d[max_act_filt_num-1] # minus 1 as we don't have a filter called 0
-    f = np.flip(max_act_filt, axis=0) # flip the filter so the most recent event is at the end rather than the start
+    if filt_type == 'max':
+        # get the filter with the largest activation difference between classes
+        f = filters_4d[max_act_filt_num-1] # minus 1 as we don't have a filter called 0
+    elif filt_type == 'median':
+        f = np.median(filters_4d, axis=0)
+    elif filt_type == 'mean':
+        f = np.mean(filters_4d, axis=0)
+
+    f = np.flip(f, axis=0) # flip the filter so the most recent event is at the end rather than the start
     f = tf.transpose(f, perm=[2, 1, 0]) # reorder filter
     return f
+
+
 
 def filt_times_pat(f:tf.Tensor, dense_tensor:tf.Tensor, filter_size:int, max_timesteps:int, stride:int) -> tf.Tensor:
     """Get the filter element-wise multiplied by the patient graph, with a sliding window taking the mean 
