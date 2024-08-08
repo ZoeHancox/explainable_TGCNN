@@ -64,6 +64,10 @@ def violin_plots(filt_nums:list, max_w_filt_lst:list, replacement_true_lst:list)
     plt.xlabel('Filter Number')
     plt.ylabel('Maximum Activation in Feature Map')
     plt.xlim(-1,15.5)
+    # Calculate the IQR
+    q1 = np.percentile(max_w_filt_lst, 25)
+    q3 = np.percentile(max_w_filt_lst, 75)
+    iqr = q3 - q1
     lower_bound = max(min(max_w_filt_lst), q1 - 1.5 * iqr)
     upper_bound = min(max(max_w_filt_lst), q3 + 1.5 * iqr)
     plt.ylim([lower_bound - 10 * iqr, upper_bound + 10 * iqr])
@@ -80,6 +84,10 @@ def violin_plots(filt_nums:list, max_w_filt_lst:list, replacement_true_lst:list)
         plt.xlabel('Filter Number')
         plt.ylabel('Maximum Activation in Feature Map')
         plt.xlim(15.5,31.5)
+        # Calculate the IQR
+        q1 = np.percentile(max_w_filt_lst, 25)
+        q3 = np.percentile(max_w_filt_lst, 75)
+        iqr = q3 - q1
         lower_bound = max(min(max_w_filt_lst), q1 - 1.5 * iqr)
         upper_bound = min(max(max_w_filt_lst), q3 + 1.5 * iqr)
         plt.ylim([lower_bound - 10 * iqr, upper_bound + 10 * iqr])
