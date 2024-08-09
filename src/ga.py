@@ -12,7 +12,7 @@ import numpy as np
 
 def get_act_metric_per_feat(model, num_filters:int, num_patients:int, pat_df:pd.DataFrame, 
                          max_event_codes:int, hip_or_knee:str, metric:str):
-    """Get the maximum of each feature map for each patient alongside the patients true outcome.
+    """Get the maximum, median or mean of each feature map for each patient alongside the patients true outcome.
 
     Args:
         model (tf.Model): trained TG-CNN model.
@@ -146,14 +146,15 @@ def find_max_act_filt(mean_activation_df:pd.DataFrame) -> int:
     filt_num = mean_activation_df.loc[max_idx, 'Filter']
     return filt_num
 
-def choose_feat_map(model, fm_type:str, mean_activation_df:pd.DataFrame) -> np.array:
+def choose_feat_map(model, fm_type:str, mean_activation_df:pd.DataFrame, feat_map_num:int=None) -> np.array:
     """Get mean or median of feature maps combined or get the feature map with the highest 
-    difference in activation between the two classes.
+    difference in activation between the two classes. Alternatively just return one feature map.
 
     Args:
         model (tf.Model): trained TG-CNN model.
         fm_type (str): which operation to perform to get the activation map to use for the weights.
         mean_activation_df (pd.DataFrame): dataframe with the difference in activation for each filter and class.
+        feat_map_num (int): filter to return.
 
     Returns:
         np.array: activation map to use for the graph visual weights.
@@ -187,8 +188,10 @@ def choose_feat_map(model, fm_type:str, mean_activation_df:pd.DataFrame) -> np.a
     elif fm_type == 'largest':
         filt_num = find_max_act_filt(mean_activation_df)
         comb_f_maps = f_maps[filt_num-1] # minus 1 as we don't have a filter called 0
+    elif fm_type == 'single':
+        comb_f_maps = f_maps[feat_map_num-1]
     else:
-        raise ValueError(f"Unsupported metric: '{fm_type}'. Expected one of: 'mean', 'largest', or 'median'.")
+        raise ValueError(f"Unsupported metric: '{fm_type}'. Expected one of: 'mean', 'largest', 'single', or 'median'.")
 
     return np.array(comb_f_maps)
 
@@ -226,14 +229,16 @@ def make_filts_4d(filters:tf.Tensor, filter_size:int, max_event_codes:int) -> np
     filters_4d = np.array(filters_4d) 
     return filters_4d
 
-def get_and_reshape_filt(filters_4d:np.array, max_act_filt_num:int, filt_type:str) -> tf.Tensor:
+def get_and_reshape_filt(filters_4d:np.array, max_act_filt_num:int, filt_type:str, filter_num:int) -> tf.Tensor:
     """Take the filters and select the filter with the highest activation and reshape to match 
     the patient graph direction i.e. most recent events on the right.
+    Use for edge activation graph.
 
     Args:
         filters_4d (np.array): 4D stack of 3D filters.
         max_act_filt_num (int): filter number with the highest activation difference between the two classes.
         filt_type (str): which operation to perform across the filters. Can be 'max', 'median' or 'mean'.
+        filter_num (int): used if the filt_type is 'single'.
 
     Returns:
         tf.Tensor: single filter with the same ordering as the patient graph tensor.
@@ -245,6 +250,8 @@ def get_and_reshape_filt(filters_4d:np.array, max_act_filt_num:int, filt_type:st
         f = np.median(filters_4d, axis=0)
     elif filt_type == 'mean':
         f = np.mean(filters_4d, axis=0)
+    elif filt_type == 'single':
+        f = filters_4d[filter_num-1]
 
     f = np.flip(f, axis=0) # flip the filter so the most recent event is at the end rather than the start
     f = tf.transpose(f, perm=[2, 1, 0]) # reorder filter
