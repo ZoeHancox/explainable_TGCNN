@@ -396,6 +396,8 @@ def create_edge_pos_df(edges_df:pd.DataFrame, pos_df:pd.DataFrame):
     edge_pos_df = edge_pos_df.rename(columns={'x': 'x1', 'y': 'y1'}).drop(columns=['node', 'cumulative_count', 'max_codes_per_visit'])
 
     edge_pos_df['edge_weight_perc'] = (edge_pos_df['edge_weights']/edge_pos_df['edge_weights'].abs().sum())*100
+    edge_pos_df.fillna(0, inplace=True) # Turn NaNs to 0 for cases where the nodes did not influence prediction
+
     return edge_pos_df
 
 
