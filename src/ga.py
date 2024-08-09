@@ -229,7 +229,7 @@ def make_filts_4d(filters:tf.Tensor, filter_size:int, max_event_codes:int) -> np
     filters_4d = np.array(filters_4d) 
     return filters_4d
 
-def get_and_reshape_filt(filters_4d:np.array, max_act_filt_num:int, filt_type:str, filter_num:int) -> tf.Tensor:
+def get_and_reshape_filt(filters_4d:np.array, max_act_filt_num:int, filt_type:str, filter_num:int=None) -> tf.Tensor:
     """Take the filters and select the filter with the highest activation and reshape to match 
     the patient graph direction i.e. most recent events on the right.
     Use for edge activation graph.
