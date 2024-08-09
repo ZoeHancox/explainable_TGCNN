@@ -75,7 +75,7 @@ def violin_plots(filt_nums:list, max_w_filt_lst:list, replacement_true_lst:list)
     iqr = q3 - q1
     lower_bound = max(min(max_w_filt_lst), q1 - 1.5 * iqr)
     upper_bound = min(max(max_w_filt_lst), q3 + 1.5 * iqr)
-    plt.ylim([lower_bound - 10 * iqr, upper_bound + 10 * iqr])
+    plt.ylim([lower_bound - 5 * iqr, upper_bound + 10 * iqr])
     plt.savefig("feature_map_plots/violin_plots1.png", bbox_inches='tight')
     plt.show()
 
@@ -95,7 +95,7 @@ def violin_plots(filt_nums:list, max_w_filt_lst:list, replacement_true_lst:list)
         iqr = q3 - q1
         lower_bound = max(min(max_w_filt_lst), q1 - 1.5 * iqr)
         upper_bound = min(max(max_w_filt_lst), q3 + 1.5 * iqr)
-        plt.ylim([lower_bound - 10 * iqr, upper_bound + 10 * iqr])
+        plt.ylim([lower_bound - 5 * iqr, upper_bound + 10 * iqr])
         plt.savefig("feature_map_plots/violin_plots2.png", bbox_inches='tight')
         plt.show()
 
@@ -128,7 +128,7 @@ def max_act_box_plots(filt_nums:list, max_w_filt_lst:list, replacement_true_lst:
     # Set y-axis limits to focus on the IQR with some padding
     lower_bound = max(min(max_w_filt_lst), q1 - 1.5 * iqr)
     upper_bound = min(max(max_w_filt_lst), q3 + 1.5 * iqr)
-    plt.ylim([lower_bound - 10 * iqr, upper_bound + 10 * iqr])
+    plt.ylim([lower_bound - 5 * iqr, upper_bound + 10 * iqr])
     # plt.xlim(-1,15.5)
     sns.despine(trim=True)
     plt.savefig("feature_map_plots/box_plots.png", bbox_inches='tight')
