@@ -3,12 +3,13 @@ import tensorflow as tf
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-def plot_ave_grad_all_f_maps(grads: tf.Tensor, title:str='Average Gradient of All Feature Maps', ylab:str='Normalised Mean Gradient Value'):
+def plot_ave_grad_all_f_maps(grads: tf.Tensor, title:str='Average Gradient of All Feature Maps', ylab:str='Normalised Mean Gradient Value', filename:str=None):
     """Plot the average gradient of all feature maps.
 
     Args:
         grads (tf.array): gradients of the CNN layer output in respect to 
                          the model output.
+        filename (str): filename pre plot type.
 
     Return:
         np.array: normalised features from the CNN layer.
@@ -26,10 +27,12 @@ def plot_ave_grad_all_f_maps(grads: tf.Tensor, title:str='Average Gradient of Al
     plt.title(title)
     plt.xlabel("Feature Map Index")
     plt.ylabel(ylab)
+    if filename != None:
+        plt.savefig(f"{filename}_ave_all_f_maps.png")
     plt.show()
     return norm_features
 
-def plot_indv_grad_f_maps(grads: tf.Tensor, title:str='Gradient of Each Feature Map', ylab:str='Normalised Mean Gradient Value'):
+def plot_indv_grad_f_maps(grads: tf.Tensor, title:str='Gradient of Each Feature Map', ylab:str='Normalised Mean Gradient Value', filename:str=None):
 
     plt.figure(figsize=(12, 10))
     for map in range(grads.shape[1]):
@@ -43,7 +46,9 @@ def plot_indv_grad_f_maps(grads: tf.Tensor, title:str='Gradient of Each Feature 
     plt.title(title)
     plt.xlabel("Feature Map Index")
     plt.ylabel(ylab)
-    plt.legend(loc='upper left')  # This will automatically use the labels specified in plt.plot
+    if filename != None:
+        plt.savefig(f"{filename}_ave_all_f_maps.png")
+    plt.legend(loc='upper left')
     plt.show()
 
 def violin_plots(filt_nums:list, max_w_filt_lst:list, replacement_true_lst:list):
