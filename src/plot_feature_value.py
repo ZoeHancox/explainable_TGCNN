@@ -47,7 +47,7 @@ def plot_indv_grad_f_maps(grads: tf.Tensor, title:str='Gradient of Each Feature 
     plt.xlabel("Feature Map Index")
     plt.ylabel(ylab)
     if filename != None:
-        plt.savefig(f"{filename}_ave_all_f_maps.png")
+        plt.savefig(f"{filename}_all_f_maps.png")
     plt.legend(loc='upper left')
     plt.show()
 
