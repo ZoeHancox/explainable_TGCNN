@@ -128,6 +128,7 @@ def act_diff(replacement_true_lst:list, max_w_filt_lst:list, filt_nums:list):
     plt.title('Difference in Activation per Class for Each Filter')
     plt.xticks(mean_activation_df['Filter'], rotation=45)  # Set x-axis ticks to integer values with rotation
     plt.tight_layout()  # Adjust layout to prevent clipping of labels
+    plt.savefig("feature_map_plots/filter_difference.png", bbox_inches='tight')
     plt.show()
 
     return mean_activation_df
