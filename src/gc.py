@@ -181,7 +181,7 @@ def map_read_code_labels(pos_df:pd.DataFrame, read_code_map_df:pd.DataFrame, tim
     # read_code_pos_df['perc_timestep_infl'] = (read_code_pos_df['timestep_ave_grad'] - read_code_pos_df['timestep_ave_grad'].min()) / (read_code_pos_df['timestep_ave_grad'].max() - read_code_pos_df['timestep_ave_grad'].min())
     
     # Return the percentage contribution of each timestep so all timestep values sum to 1
-    read_code_pos_df['perc_timestep_infl'] = (read_code_pos_df['timestep_ave_grad'] / read_code_pos_df['timestep_ave_grad'].abs().sum())*100
+    read_code_pos_df['perc_timestep_infl'] = (read_code_pos_df['timestep_ave_grad'].abs() / read_code_pos_df['timestep_ave_grad'].abs().sum())*100
 
     read_code_pos_df.fillna(0, inplace=True) # Turn NaNs to 0 for cases where the nodes did not influence prediction
     
