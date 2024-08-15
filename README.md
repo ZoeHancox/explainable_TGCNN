@@ -71,8 +71,8 @@ The GIF below shows how the filters from the 3D CNN layer are used to show edge 
 1. Extract the filters from the 3D CNN layer of the TG-CNN model.
 2. Find the filter with the strongest differentiation of maximum activation between the positive and negative class.
 3. Select the filter with the largest activation difference (or mean or median of all filters) to show edge activation.
-4. Make the stride length the same as the number of timesteps in the filter.
-5. Do element-wise multiplication between the filter and the input graph, to get the edge activation tensor.
+4. Do element-wise multiplication between the filter and the input graph as a sliding window.
+5. Take the mean of for each element the sliding window passes over, to get the edge activation tensor.
 6. Use the edge activation tensor to get weights for the edges.
 7. Get the weights as a percentage of all the weights, to see the percentage influence of each pair of Read Codes. 
 8. Colour the edges depending on the percentage influence.
