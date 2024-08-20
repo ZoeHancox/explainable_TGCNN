@@ -85,13 +85,14 @@ def get_act_metric_per_feat(model, num_filters:int, num_patients:int, pat_df:pd.
 
     return replacement_true_lst, max_w_filt_lst, filt_nums
 
-def act_diff(replacement_true_lst:list, max_w_filt_lst:list, filt_nums:list):
+def act_diff(replacement_true_lst:list, max_w_filt_lst:list, filt_nums:list, show_plot:bool=True):
     """Calculate the difference between the two Hip Replacement classes for each Filter
 
     Args:
         replacement_true_lst (list): binary whether someone has a replacement or not.
         max_w_filt_lst (list): maximum value in feature map.
         filt_nums (list): number of filters.
+        show_plot (bool): If True print the plot.
 
     Returns:
         pd.DataFrame: DataFrame with filters and the respective difference in the max activation 
@@ -129,7 +130,8 @@ def act_diff(replacement_true_lst:list, max_w_filt_lst:list, filt_nums:list):
     plt.xticks(mean_activation_df['Filter'], rotation=45)  # Set x-axis ticks to integer values with rotation
     plt.tight_layout()  # Adjust layout to prevent clipping of labels
     plt.savefig("feature_map_plots/filter_difference.png", bbox_inches='tight')
-    plt.show()
+    if show_plot:
+        plt.show()
 
     return mean_activation_df
 
@@ -422,7 +424,7 @@ def plot_edge_act_plotly(edge_pos_df:pd.DataFrame, pos_df:pd.DataFrame, read_cod
         logits (tf.Tensor): _description_
         outcome (str): _description_
         filename (str): Name to save the file as, this is suffixed with '_plot.html'.
-        html_open (bool): If True open HTML plotly graph.
+        html_open (bool): If True open HTML plotly graph in new tab.
     """
     cmap = plt.cm.viridis_r
     edge_influ_perc = (edge_pos_df['edge_weight_perc'] / 100).tolist()
