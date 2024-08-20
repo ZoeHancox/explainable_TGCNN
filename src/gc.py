@@ -213,7 +213,7 @@ def text_color_mapping(numbers):
     return ['black' if num < 50 else 'white' for num in numbers]
 
 def plot_gradcam_plotly(edge_pos_df:pd.DataFrame, pos_df:pd.DataFrame, read_code_pos_df:pd.DataFrame,
-                        years_in_advance:str, logits:tf.Tensor, outcome:str, filename:str):
+                        years_in_advance:str, logits:tf.Tensor, outcome:str, filename:str, html_open:bool):
     """_summary_
 
     Args:
@@ -224,6 +224,7 @@ def plot_gradcam_plotly(edge_pos_df:pd.DataFrame, pos_df:pd.DataFrame, read_code
         logits (tf.Tensor): _description_
         outcome (str): _description_
         filename (str): Name to save the file as, this is suffixed with '_plot.html'.
+        html_open (bool): If True open HTML plotly graph.
     """
     edge_x = []
     edge_y = []
@@ -369,5 +370,5 @@ def plot_gradcam_plotly(edge_pos_df:pd.DataFrame, pos_df:pd.DataFrame, read_code
 
     
 
-    pio.write_html(fig, file=filename+"_plot.html", auto_open=True)
+    pio.write_html(fig, file=filename+"_plot.html", auto_open=html_open)
     fig.show()

@@ -410,7 +410,7 @@ def create_edge_pos_df(edges_df:pd.DataFrame, pos_df:pd.DataFrame):
 
 
 def plot_edge_act_plotly(edge_pos_df:pd.DataFrame, pos_df:pd.DataFrame, read_code_pos_df:pd.DataFrame,
-                        years_in_advance:str, logits:tf.Tensor, outcome:str, filename:str):
+                        years_in_advance:str, logits:tf.Tensor, outcome:str, filename:str, html_open:bool):
     """Create plotly graph that colors the edges depending on how much influence the connecting Read Codes 
     have on model prediction.
 
@@ -422,6 +422,7 @@ def plot_edge_act_plotly(edge_pos_df:pd.DataFrame, pos_df:pd.DataFrame, read_cod
         logits (tf.Tensor): _description_
         outcome (str): _description_
         filename (str): Name to save the file as, this is suffixed with '_plot.html'.
+        html_open (bool): If True open HTML plotly graph.
     """
     cmap = plt.cm.viridis_r
     edge_influ_perc = (edge_pos_df['edge_weight_perc'] / 100).tolist()
@@ -576,5 +577,5 @@ def plot_edge_act_plotly(edge_pos_df:pd.DataFrame, pos_df:pd.DataFrame, read_cod
                     )
 
     # Save the figure to an HTML file and display it
-    pio.write_html(fig, file=filename + "_plot.html", auto_open=True)
+    pio.write_html(fig, file=filename + "_plot.html", auto_open=html_open)
     fig.show()
