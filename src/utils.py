@@ -514,4 +514,7 @@ def return_pat_from_df(pat_df:pd.DataFrame, max_nodes:int, hip_or_knee:str, n:in
     demo_vals = demos_z[['gender', 'imd_quin', 'age_zscore']].values 
     demo_tensor = tf.convert_to_tensor([demo_vals])
 
-    return ordered_indiv, input_4d, demo_tensor, outcome, outcome_bin
+    if add_p_node:
+        return ordered_indiv, input_4d, demo_tensor, outcome, outcome_bin, node_pair_idx
+    else:
+        return ordered_indiv, input_4d, demo_tensor, outcome, outcome_bin
