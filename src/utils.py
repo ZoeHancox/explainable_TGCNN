@@ -483,7 +483,6 @@ def return_pat_from_df(pat_df:pd.DataFrame, max_nodes:int, hip_or_knee:str, n:in
 
         for i in range(first_idx+1, len(i_list)): # go from first_idx onwards
             if (first[2] == (i_list[i][2] + 1)) and (first[0] == i_list[i][1]):
-                print(i_list[i])
                 second = copy.deepcopy(i_list[i])
                 random_pair = [first, second]
                 break
@@ -510,7 +509,7 @@ def return_pat_from_df(pat_df:pd.DataFrame, max_nodes:int, hip_or_knee:str, n:in
         v_list_copy = copy.deepcopy(v_list)
         v_list.insert(first_idx, v_list_copy[first_idx])
         v_list.insert(i + 2, v_list_copy[i])
-        
+
     individual_sparse = tf.sparse.SparseTensor(i_list, v_list, (max_nodes, max_nodes, 200))
 
     # Adding the sparse tensor to a list of all the tensors
