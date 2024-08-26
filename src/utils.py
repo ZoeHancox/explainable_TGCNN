@@ -460,6 +460,7 @@ def return_pat_from_df(pat_df:pd.DataFrame, max_nodes:int, hip_or_knee:str, n:in
         tf.Tensor: demographics of patient.
         str: replacement type or no replacement.
         int: 1 if replacement, 0 if no replacement.
+        int: visit number to compare percentage influence of.
     """
 
     if n >= len(pat_df):
@@ -469,8 +470,11 @@ def return_pat_from_df(pat_df:pd.DataFrame, max_nodes:int, hip_or_knee:str, n:in
     i_list = pat_df.iloc[n]['indices'] # indices from patient cell
     v_list = pat_df.iloc[n]['values'] # values from patient cell
     if add_p_node:
-        node_pair_idx = random.randint(0, len(i_list) - 3)
-        dup_node_pair = copy.deepcopy(i_list[node_pair_idx:node_pair_idx+2])
+        if len(i_list) >= 3:
+            node_pair_idx = random.randint(0, len(i_list) - 2)
+        else:
+            node_pair_idx = 0
+        dup_node_pair = copy.deepcopy(i_list[node_pair_idx:node_pair_idx+2])  
 
         # numbers we don't want to use again
         exclude1 = dup_node_pair[0][1]
@@ -515,6 +519,7 @@ def return_pat_from_df(pat_df:pd.DataFrame, max_nodes:int, hip_or_knee:str, n:in
     demo_tensor = tf.convert_to_tensor([demo_vals])
 
     if add_p_node:
-        return ordered_indiv, input_4d, demo_tensor, outcome, outcome_bin, node_pair_idx
+        visit_num = 200-dup_node_pair[0][2]+1 # 200 is maximum number of visits
+        return ordered_indiv, input_4d, demo_tensor, outcome, outcome_bin, visit_num
     else:
         return ordered_indiv, input_4d, demo_tensor, outcome, outcome_bin
