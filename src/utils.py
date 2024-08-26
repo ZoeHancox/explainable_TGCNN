@@ -467,18 +467,31 @@ def return_pat_from_df(pat_df:pd.DataFrame, max_nodes:int, hip_or_knee:str, n:in
         raise ValueError(f"Input 'n' must be smaller than the number of patients. Received n={n}, num_patients={len(pat_df)}.")
     
     
-    i_list = pat_df.iloc[n]['indices'] # indices from patient cell
-    v_list = pat_df.iloc[n]['values'] # values from patient cell
+    i_list, v_list =None,None
+    i_list = copy.deepcopy(cv_patients.iloc[n]['indices']) # indices from patient cell
+    v_list = copy.deepcopy(cv_patients.iloc[n]['values']) # values from patient cell
     if add_p_node:
-        if len(i_list) >= 3:
-            node_pair_idx = random.randint(0, len(i_list) - 2)
-        else:
-            node_pair_idx = 0
-        dup_node_pair = copy.deepcopy(i_list[node_pair_idx:node_pair_idx+2])  
+        last_visit_num = i_list[-1][2]
+        while True:
+            first_idx = random.randint(0, len(i_list) - 2)
+            if i_list[first_idx][2] != last_visit_num:
+                break
+
+        first = copy.deepcopy(i_list[first_idx])
+        
+        
+
+        for i in range(first_idx+1, len(i_list)): # go from first_idx onwards
+            if (first[2] == (i_list[i][2] + 1)) and (first[0] == i_list[i][1]):
+                print(i_list[i])
+                second = copy.deepcopy(i_list[i])
+                random_pair = [first, second]
+                break
+
 
         # numbers we don't want to use again
-        exclude1 = dup_node_pair[0][1]
-        exclude2 = dup_node_pair[1][0]
+        exclude1 = random_pair[0][1]
+        exclude2 = random_pair[1][0]
 
         # set the node numbers to a random read code
         while True:
@@ -486,16 +499,18 @@ def return_pat_from_df(pat_df:pd.DataFrame, max_nodes:int, hip_or_knee:str, n:in
             if random_code != exclude1 and random_code != exclude2:
                 break
 
-        dup_node_pair[0][0] = random_code
-        dup_node_pair[1][1] = random_code
+        random_pair[0][0] = random_code
+        random_pair[1][1] = random_code
 
-        i_list.insert(node_pair_idx + 2, dup_node_pair[0])
-        i_list.insert(node_pair_idx + 3, dup_node_pair[1])
+        
+        i_list.insert(first_idx + 1, random_pair[0])
+        i_list.insert(i + 1, random_pair[1])
 
         # duplicate the time between
-        v_list.insert(node_pair_idx + 2, v_list[node_pair_idx])
-        v_list.insert(node_pair_idx + 3, v_list[node_pair_idx + 1])
-
+        v_list_copy = copy.deepcopy(v_list)
+        v_list.insert(first_idx, v_list_copy[first_idx])
+        v_list.insert(i + 2, v_list_copy[i])
+        
     individual_sparse = tf.sparse.SparseTensor(i_list, v_list, (max_nodes, max_nodes, 200))
 
     # Adding the sparse tensor to a list of all the tensors
@@ -519,7 +534,7 @@ def return_pat_from_df(pat_df:pd.DataFrame, max_nodes:int, hip_or_knee:str, n:in
     demo_tensor = tf.convert_to_tensor([demo_vals])
 
     if add_p_node:
-        visit_num = 200-dup_node_pair[0][2]+1 # 200 is maximum number of visits
+        visit_num = 200-first[2] # 200 is maximum number of visits
         return ordered_indiv, input_4d, demo_tensor, outcome, outcome_bin, visit_num
     else:
         return ordered_indiv, input_4d, demo_tensor, outcome, outcome_bin
