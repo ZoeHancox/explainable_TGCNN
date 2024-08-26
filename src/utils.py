@@ -7,6 +7,8 @@ from keras.utils import np_utils
 import matplotlib.pyplot as plt
 import scipy.stats as stats
 from sklearn.calibration import calibration_curve
+import random
+import copy
 import warnings 
 warnings.simplefilter('ignore', np.RankWarning)
 warnings.filterwarnings('ignore')
@@ -438,7 +440,7 @@ def calibration_slope(true_y, logits):
     
     return slope
 
-def return_pat_from_df(pat_df:pd.DataFrame, max_nodes:int, hip_or_knee:str, n:int):
+def return_pat_from_df(pat_df:pd.DataFrame, max_nodes:int, hip_or_knee:str, n:int, add_p_node:bool=False):
     """Select a patient from the indices/values dataframe and get their SparseTensor, 
     dense tensor, demographic information and true outcome/class.
 
@@ -447,6 +449,7 @@ def return_pat_from_df(pat_df:pd.DataFrame, max_nodes:int, hip_or_knee:str, n:in
         max_nodes (int): maximum number of nodes/Read Codes.
         hip_or_knee (str): model type 'hip' or 'knee'.
         n (int): patient row to extract.
+        add_p_node (bool): if True add psuedo node for stability evaluation.
 
     Raises:
         ValueError: n must be less than pat_df 
@@ -465,6 +468,29 @@ def return_pat_from_df(pat_df:pd.DataFrame, max_nodes:int, hip_or_knee:str, n:in
     
     i_list = pat_df.iloc[n]['indices'] # indices from patient cell
     v_list = pat_df.iloc[n]['values'] # values from patient cell
+    if add_p_node:
+        node_pair_idx = random.randint(0, len(i_list) - 3)
+        dup_node_pair = copy.deepcopy(i_list[node_pair_idx:node_pair_idx+2])
+
+        # numbers we don't want to use again
+        exclude1 = dup_node_pair[0][1]
+        exclude2 = dup_node_pair[1][0]
+
+        # set the node numbers to a random read code
+        while True:
+            random_code = random.randint(0, max_nodes)
+            if random_code != exclude1 and random_code != exclude2:
+                break
+
+        dup_node_pair[0][0] = random_code
+        dup_node_pair[1][1] = random_code
+
+        i_list.insert(node_pair_idx + 2, dup_node_pair[0])
+        i_list.insert(node_pair_idx + 3, dup_node_pair[1])
+
+        # duplicate the time between
+        v_list.insert(node_pair_idx + 2, v_list[node_pair_idx])
+        v_list.insert(node_pair_idx + 3, v_list[node_pair_idx + 1])
 
     individual_sparse = tf.sparse.SparseTensor(i_list, v_list, (max_nodes, max_nodes, 200))
 

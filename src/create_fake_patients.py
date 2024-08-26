@@ -1,6 +1,7 @@
 import pandas as pd
 import random
 import tensorflow as tf
+import numpy as np
 
 def create_fake_index_list(max_events, max_nodes):
     """Create indices for fake patients e.g. [[56,23,99], [34,3,98]]
@@ -99,7 +100,8 @@ def create_fake_int_label(num_patients):
 
     return df
 
-def return_fake_pat(num_patients, max_visits, max_nodes, hip_or_knee, n):
+import copy
+def return_fake_pat(num_patients, max_visits, max_nodes, hip_or_knee, n, add_p_node:bool=False):
     """_summary_
 
     Args:
@@ -108,6 +110,7 @@ def return_fake_pat(num_patients, max_visits, max_nodes, hip_or_knee, n):
         max_nodes (_type_): maximum number of Read Codes to include.
         hip_or_knee (str): which replacement type is being predicted.
         n (int): patient number to plot.
+        add_p_node (bool): if True add psuedo node for stability evaluation.
 
     Returns:
         tf.sparse array: Sparse patient graph 3D.
@@ -124,6 +127,30 @@ def return_fake_pat(num_patients, max_visits, max_nodes, hip_or_knee, n):
     cv_patients = create_fake_patient_df(num_patients=num_patients, max_events=max_visits, max_nodes=max_nodes)
     i_list = cv_patients.iloc[n]['indices'] # indices from patient cell
     v_list = cv_patients.iloc[n]['values'] # values from patient cell
+    if add_p_node:
+        node_pair_idx = random.randint(0, len(i_list) - 3)
+        dup_node_pair = copy.deepcopy(i_list[node_pair_idx:node_pair_idx+2])
+
+        # numbers we don't want to use again
+        exclude1 = dup_node_pair[0][1]
+        exclude2 = dup_node_pair[1][0]
+
+        # set the node numbers to a random read code
+        while True:
+            random_code = random.randint(0, max_nodes)
+            if random_code != exclude1 and random_code != exclude2:
+                break
+
+        dup_node_pair[0][0] = random_code
+        dup_node_pair[1][1] = random_code
+
+        i_list.insert(node_pair_idx + 2, dup_node_pair[0])
+        i_list.insert(node_pair_idx + 3, dup_node_pair[1])
+
+        # duplicate the time between
+        v_list.insert(node_pair_idx + 2, v_list[node_pair_idx])
+        v_list.insert(node_pair_idx + 3, v_list[node_pair_idx + 1])
+
 
     individual_sparse = tf.sparse.SparseTensor(i_list, v_list, (max_nodes, max_nodes, 100))
 
@@ -147,6 +174,9 @@ def return_fake_pat(num_patients, max_visits, max_nodes, hip_or_knee, n):
     demo_vals = demos_z[['gender', 'imd_quin', 'age_zscore']].values 
     demo_tensor = tf.convert_to_tensor([demo_vals])
 
-    return ordered_indiv, input_4d, demo_tensor, outcome, outcome_bin
+    if add_p_node:
+        return ordered_indiv, input_4d, demo_tensor, outcome, outcome_bin, node_pair_idx
+    else:
+        return ordered_indiv, input_4d, demo_tensor, outcome, outcome_bin
 
 
