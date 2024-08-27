@@ -468,14 +468,17 @@ def return_pat_from_df(pat_df:pd.DataFrame, max_nodes:int, hip_or_knee:str, n:in
     
     
     i_list, v_list =None,None
-    i_list = copy.deepcopy(cv_patients.iloc[n]['indices']) # indices from patient cell
-    v_list = copy.deepcopy(cv_patients.iloc[n]['values']) # values from patient cell
+    i_list = copy.deepcopy(pat_df.iloc[n]['indices']) # indices from patient cell
+    v_list = copy.deepcopy(pat_df.iloc[n]['values']) # values from patient cell
     if add_p_node:
         last_visit_num = i_list[-1][2]
         while True:
-            first_idx = random.randint(0, len(i_list) - 2)
-            if i_list[first_idx][2] != last_visit_num:
-                break
+            if len(i_list) >2:
+                first_idx = random.randint(0, len(i_list) - 2)
+                if i_list[first_idx][2] != last_visit_num:
+                    break
+            else:
+                first_idx = 0
 
         first = copy.deepcopy(i_list[first_idx])
         
