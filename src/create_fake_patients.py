@@ -187,6 +187,7 @@ def return_fake_pat(num_patients, max_visits, max_nodes, hip_or_knee, n, add_p_n
                     break
             else:
                 first_idx = 0
+                break
 
         first = copy.deepcopy(i_list[first_idx])
 

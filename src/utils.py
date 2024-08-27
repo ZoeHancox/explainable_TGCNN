@@ -483,6 +483,7 @@ def return_pat_from_df(pat_df:pd.DataFrame, max_nodes:int, hip_or_knee:str, n:in
                     break
             else:
                 first_idx = 0
+                break
 
         first = copy.deepcopy(i_list[first_idx])
         
