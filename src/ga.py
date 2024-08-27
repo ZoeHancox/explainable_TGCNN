@@ -148,7 +148,7 @@ def find_max_act_filt(mean_activation_df:pd.DataFrame) -> int:
     filt_num = mean_activation_df.loc[max_idx, 'Filter']
     return filt_num
 
-def choose_feat_map(model, fm_type:str, mean_activation_df:pd.DataFrame, feat_map_num:int=None) -> np.array:
+def choose_feat_map(model, fm_type:str, mean_activation_df:pd.DataFrame=None, feat_map_num:int=None) -> np.array:
     """Get mean or median of feature maps combined or get the feature map with the highest 
     difference in activation between the two classes. Alternatively just return one feature map.
 
