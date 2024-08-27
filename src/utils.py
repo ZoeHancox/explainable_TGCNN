@@ -471,91 +471,128 @@ def return_pat_from_df(pat_df:pd.DataFrame, max_nodes:int, hip_or_knee:str, n:in
     if add_p_node and change_node:
         raise ValueError("You cannot both add random nodes and change a node code, please set only one of 'add_p_node' or 'change_node' to True.")
     
+    only_one_visit = False
     i_list, v_list =None,None
     i_list = copy.deepcopy(pat_df.iloc[n]['indices']) # indices from patient cell
     v_list = copy.deepcopy(pat_df.iloc[n]['values']) # values from patient cell
     if add_p_node:
         last_visit_num = i_list[-1][2]
-        while True:
-            if len(i_list) >2:
-                first_idx = random.randint(0, len(i_list) - 2)
-                if i_list[first_idx][2] != last_visit_num:
-                    break
-            else:
-                first_idx = 0
-                break
+        all_timesteps = {inner_list[2] for inner_list in i_list}
+        if len(all_timesteps) > 2:
+            first_idx = random.randint(0, len(all_timesteps) - 2)
+        else:
+            first_idx = 0
+            if len(all_timesteps) == 1:
+                only_one_visit = True
 
         first = copy.deepcopy(i_list[first_idx])
         
-        
+        if only_one_visit == False:
+            # find the next inner list which is one timestep behind and idx 0 == idx 1
+            for i in range(first_idx, len(i_list)): # go from first_idx onwards
+                if (first[2] == (i_list[i][2] + 1)) and (first[0] == i_list[i][1]):
+                    second = copy.deepcopy(i_list[i])
+                    random_pair = [first, second]
+                    break
 
-        for i in range(first_idx+1, len(i_list)): # go from first_idx onwards
-            if (first[2] == (i_list[i][2] + 1)) and (first[0] == i_list[i][1]):
-                second = copy.deepcopy(i_list[i])
-                random_pair = [first, second]
-                break
+            # could also be same timesteps with Read Codes we don't want to repeat
+            # if index 2 inner list = first[2] or second[2] create a list of index 0 and 1 as a list of Read Codes to exclude
+            excl_list1 = {item for inner_list in i_list if inner_list[2] == first[2] for item in (inner_list[0], inner_list[1])}
+            excl_list2 = {item for inner_list in i_list if inner_list[2] == second[2] for item in (inner_list[0], inner_list[1])}
+
+            # Combine the sets and convert to a list
+            excl_list = list(excl_list1 | excl_list2)   
 
 
-        # numbers we don't want to use again
-        exclude1 = random_pair[0][1]
-        exclude2 = random_pair[1][0]
+            # set the node number to a random read code
+            codes = list(range(max_nodes))
+            # Remove items that are in excl_list
+            codes = [code for code in codes if code not in excl_list]
+            random_code = random.choice(codes)
 
-        # set the node numbers to a random read code
-        while True:
-            random_code = random.randint(0, max_nodes)
-            if random_code != exclude1 and random_code != exclude2:
-                break
+            random_pair[0][0] = random_code
+            random_pair[1][1] = random_code
 
-        random_pair[0][0] = random_code
-        random_pair[1][1] = random_code
+            
+            i_list.insert(first_idx + 1, random_pair[0])
+            i_list.insert(i + 1, random_pair[1])
 
-        
-        i_list.insert(first_idx + 1, random_pair[0])
-        i_list.insert(i + 1, random_pair[1])
+            # duplicate the time between
+            v_list_copy = copy.deepcopy(v_list)
+            v_list.insert(first_idx, v_list_copy[first_idx])
+            v_list.insert(i + 2, v_list_copy[i])
+        else:
+            # could also be same timesteps with Read Codes we don't want to repeat
+            # if index 2 inner list = first[2] or second[2] create a list of index 0 and 1 as a list of Read Codes to exclude
+            excl_list1 = {item for inner_list in i_list if inner_list[2] == first[2] for item in (inner_list[0], inner_list[1])} 
 
-        # duplicate the time between
-        v_list_copy = copy.deepcopy(v_list)
-        v_list.insert(first_idx, v_list_copy[first_idx])
-        v_list.insert(i + 2, v_list_copy[i])
+            # set the node number to a random read code
+            codes = list(range(max_nodes))
+            # Remove items that are in excl_list
+            codes = [code for code in codes if code not in excl_list1]
+            random_code = random.choice(codes)
+
+            first[0] = random_code
+
+            
+            i_list.insert(first_idx + 1, first)
+
+            # duplicate the time between
+            v_list_copy = copy.deepcopy(v_list)
+            v_list.insert(first_idx, v_list_copy[first_idx])
 
     if change_node:
 
         last_visit_num = i_list[-1][2]
-        while True:
-            if len(i_list) > 2:
-                first_idx = random.randint(0, len(i_list) - 2)
-                if i_list[first_idx][2] != last_visit_num:
-                    break
-            else:
-                first_idx = 0
+        all_timesteps = {inner_list[2] for inner_list in i_list}
+        if len(all_timesteps) > 2:
+            first_idx = random.randint(0, len(all_timesteps) - 2)
+        else:
+            first_idx = 0
+            if len(all_timesteps) == 1:
+                only_one_visit = True
 
         first = copy.deepcopy(i_list[first_idx])
+        if only_one_visit == False:
+            for i in range(first_idx + 1, len(i_list)):  # go from first_idx onwards
+                if (first[2] == (i_list[i][2] + 1)) and (first[0] == i_list[i][1]):
+                    second = copy.deepcopy(i_list[i])
+                    random_pair = [first, second]
+                    break
 
-        for i in range(first_idx + 1, len(i_list)):  # go from first_idx onwards
-            if (first[2] == (i_list[i][2] + 1)) and (first[0] == i_list[i][1]):
-                #print(i_list[i])
-                second = copy.deepcopy(i_list[i])
-                random_pair = [first, second]
-                break
 
-        # numbers we don't want to use again
-        exclude1 = random_pair[0][1]
-        exclude2 = random_pair[1][0]
+            # could also be same timesteps with Read Codes we don't want to repeat
+            # if index 2 inner list = first[2] or second[2] create a list of index 0 and 1 as a list of Read Codes to exclude
+            excl_list1 = {item for inner_list in i_list if inner_list[2] == first[2] for item in (inner_list[0], inner_list[1])}
+            excl_list2 = {item for inner_list in i_list if inner_list[2] == second[2] for item in (inner_list[0], inner_list[1])}
 
-        # set the node numbers to a random read code
-        while True:
-            random_code = random.randint(0, max_nodes)
-            if random_code != exclude1 and random_code != exclude2:
-                break
+            # Combine the sets and convert to a list
+            excl_list = list(excl_list1 | excl_list2) 
 
-        random_pair[0][0] = random_code
-        random_pair[1][1] = random_code
+            # set the node number to a random read code
+            codes = list(range(max_nodes))
+            # Remove items that are in excl_list
+            codes = [code for code in codes if code not in excl_list]
+            random_code = random.choice(codes)
 
-        i_list_copy = copy.deepcopy(i_list)
-        # Replace existing inner lists with the new ones
-        i_list_copy[first_idx] = random_pair[0]
-        i_list_copy[i] = random_pair[1]
-        #print(random_pair)
+            random_pair[0][0] = random_code
+            random_pair[1][1] = random_code
+
+            i_list_copy = copy.deepcopy(i_list)
+            # Replace existing inner lists with the new ones
+            i_list_copy[first_idx] = random_pair[0]
+            i_list_copy[i] = random_pair[1]
+
+        else:
+            excl_list1 = {item for inner_list in i_list if inner_list[2] == first[2] for item in (inner_list[0], inner_list[1])}
+            codes = list(range(max_nodes))
+            # Remove items that are in excl_list
+            codes = [code for code in codes if code not in excl_list]
+            random_code = random.choice(codes)
+            first[0] = random_code
+            i_list_copy = copy.deepcopy(i_list)
+            i_list_copy[first_idx] = random_pair[0]
+
         individual_sparse = tf.sparse.SparseTensor(i_list_copy, v_list, (max_nodes, max_nodes, 200))
 
 
