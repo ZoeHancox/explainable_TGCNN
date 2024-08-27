@@ -101,7 +101,8 @@ def create_fake_int_label(num_patients):
     return df
 
 import copy
-def return_fake_pat(num_patients, max_visits, max_nodes, hip_or_knee, n, add_p_node:bool=False):
+def return_fake_pat(num_patients, max_visits, max_nodes, hip_or_knee, n, add_p_node:bool=False, 
+                    change_node:bool=False):
     """_summary_
 
     Args:
@@ -111,6 +112,7 @@ def return_fake_pat(num_patients, max_visits, max_nodes, hip_or_knee, n, add_p_n
         hip_or_knee (str): which replacement type is being predicted.
         n (int): patient number to plot.
         add_p_node (bool): if True add psuedo node for stability evaluation.
+        change_node (bool): if True change the Read Code of a random node for stability evaluation.
 
     Returns:
         tf.sparse array: Sparse patient graph 3D.
@@ -119,21 +121,43 @@ def return_fake_pat(num_patients, max_visits, max_nodes, hip_or_knee, n, add_p_n
                     for age as you can't normalise when only one value.
         str: 'hip' or 'knee'.
         binary: 1 for replacement, 0 for no replacement.
+        int: visit number to compare percentage influence of.
 
     """
     if n >= num_patients:
         raise ValueError(f"Input 'n' must be smaller than input 'num_patients'. Received n={n}, num_patients={num_patients}.")
-    
+    if add_p_node and change_node:
+        raise ValueError("You cannot both add random nodes and change a node code, please set only one of 'add_p_node' or 'change_node' to True.")
+
     cv_patients = create_fake_patient_df(num_patients=num_patients, max_events=max_visits, max_nodes=max_nodes)
-    i_list = cv_patients.iloc[n]['indices'] # indices from patient cell
-    v_list = cv_patients.iloc[n]['values'] # values from patient cell
+    i_list, v_list =None,None
+    i_list = copy.deepcopy(cv_patients.iloc[n]['indices']) # indices from patient cell
+    v_list = copy.deepcopy(cv_patients.iloc[n]['values']) # values from patient cell
     if add_p_node:
-        node_pair_idx = random.randint(0, len(i_list) - 3)
-        dup_node_pair = copy.deepcopy(i_list[node_pair_idx:node_pair_idx+2])
+        last_visit_num = i_list[-1][2]
+        while True:
+            if len(i_list) >2:
+                first_idx = random.randint(0, len(i_list) - 2)
+                if i_list[first_idx][2] != last_visit_num:
+                    break
+            else:
+                first_idx = 0
+
+        first = copy.deepcopy(i_list[first_idx])
+        
+        
+
+        for i in range(first_idx+1, len(i_list)): # go from first_idx onwards
+            if (first[2] == (i_list[i][2] + 1)) and (first[0] == i_list[i][1]):
+                #print(i_list[i])
+                second = copy.deepcopy(i_list[i])
+                random_pair = [first, second]
+                break
+
 
         # numbers we don't want to use again
-        exclude1 = dup_node_pair[0][1]
-        exclude2 = dup_node_pair[1][0]
+        exclude1 = random_pair[0][1]
+        exclude2 = random_pair[1][0]
 
         # set the node numbers to a random read code
         while True:
@@ -141,18 +165,62 @@ def return_fake_pat(num_patients, max_visits, max_nodes, hip_or_knee, n, add_p_n
             if random_code != exclude1 and random_code != exclude2:
                 break
 
-        dup_node_pair[0][0] = random_code
-        dup_node_pair[1][1] = random_code
+        random_pair[0][0] = random_code
+        random_pair[1][1] = random_code
 
-        i_list.insert(node_pair_idx + 2, dup_node_pair[0])
-        i_list.insert(node_pair_idx + 3, dup_node_pair[1])
+        
+        i_list.insert(first_idx + 1, random_pair[0])
+        i_list.insert(i + 1, random_pair[1])
 
         # duplicate the time between
-        v_list.insert(node_pair_idx + 2, v_list[node_pair_idx])
-        v_list.insert(node_pair_idx + 3, v_list[node_pair_idx + 1])
+        v_list_copy = copy.deepcopy(v_list)
+        v_list.insert(first_idx, v_list_copy[first_idx])
+        v_list.insert(i + 2, v_list_copy[i])
+
+    if change_node:
+
+        last_visit_num = i_list[-1][2]
+        while True:
+            if len(i_list) > 2:
+                first_idx = random.randint(0, len(i_list) - 2)
+                if i_list[first_idx][2] != last_visit_num:
+                    break
+            else:
+                first_idx = 0
+
+        first = copy.deepcopy(i_list[first_idx])
+
+        for i in range(first_idx + 1, len(i_list)):  # go from first_idx onwards
+            if (first[2] == (i_list[i][2] + 1)) and (first[0] == i_list[i][1]):
+                #print(i_list[i])
+                second = copy.deepcopy(i_list[i])
+                random_pair = [first, second]
+                break
+
+        # numbers we don't want to use again
+        exclude1 = random_pair[0][1]
+        exclude2 = random_pair[1][0]
+
+        # set the node numbers to a random read code
+        while True:
+            random_code = random.randint(0, max_nodes)
+            if random_code != exclude1 and random_code != exclude2:
+                break
+
+        random_pair[0][0] = random_code
+        random_pair[1][1] = random_code
+
+        i_list_copy = copy.deepcopy(i_list)
+        # Replace existing inner lists with the new ones
+        i_list_copy[first_idx] = random_pair[0]
+        i_list_copy[i] = random_pair[1]
+        #print(random_pair)
+        individual_sparse = tf.sparse.SparseTensor(i_list_copy, v_list, (max_nodes, max_nodes, 100))
 
 
-    individual_sparse = tf.sparse.SparseTensor(i_list, v_list, (max_nodes, max_nodes, 100))
+
+    if change_node == False:
+        individual_sparse = tf.sparse.SparseTensor(i_list, v_list, (max_nodes, max_nodes, 100))
 
     # Adding the sparse tensor to a list of all the tensors
     ordered_indiv = tf.sparse.reorder(individual_sparse) # reorder required for tensor to work (no effect to outcome)
@@ -175,7 +243,11 @@ def return_fake_pat(num_patients, max_visits, max_nodes, hip_or_knee, n, add_p_n
     demo_tensor = tf.convert_to_tensor([demo_vals])
 
     if add_p_node:
-        return ordered_indiv, input_4d, demo_tensor, outcome, outcome_bin, node_pair_idx
+        visit_num = max_visits-first[2]+1
+        return ordered_indiv, input_4d, demo_tensor, outcome, outcome_bin, visit_num
+    elif change_node:
+        edge_num = len(i_list_copy)-first_idx
+        return ordered_indiv, input_4d, demo_tensor, outcome, outcome_bin, edge_num
     else:
         return ordered_indiv, input_4d, demo_tensor, outcome, outcome_bin
 

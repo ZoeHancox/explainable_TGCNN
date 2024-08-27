@@ -440,7 +440,8 @@ def calibration_slope(true_y, logits):
     
     return slope
 
-def return_pat_from_df(pat_df:pd.DataFrame, max_nodes:int, hip_or_knee:str, n:int, add_p_node:bool=False):
+def return_pat_from_df(pat_df:pd.DataFrame, max_nodes:int, hip_or_knee:str, n:int, add_p_node:bool=False,
+                       change_node:bool=False):
     """Select a patient from the indices/values dataframe and get their SparseTensor, 
     dense tensor, demographic information and true outcome/class.
 
@@ -449,10 +450,12 @@ def return_pat_from_df(pat_df:pd.DataFrame, max_nodes:int, hip_or_knee:str, n:in
         max_nodes (int): maximum number of nodes/Read Codes.
         hip_or_knee (str): model type 'hip' or 'knee'.
         n (int): patient row to extract.
-        add_p_node (bool): if True add psuedo node for stability evaluation.
-
+        add_p_node (bool): if True add psuedo node for stability evaluation for fm-act and Grad-CAM methods.
+        change_node (bool): if True change the Read Code of a random node for stability evaluation.
+        
     Raises:
         ValueError: n must be less than pat_df 
+        ValueError: only one of add_p_node or change_node can be True
 
     Returns:
         tf.SparseTensor: 3D sparse tensor representing patient graph.
@@ -460,12 +463,13 @@ def return_pat_from_df(pat_df:pd.DataFrame, max_nodes:int, hip_or_knee:str, n:in
         tf.Tensor: demographics of patient.
         str: replacement type or no replacement.
         int: 1 if replacement, 0 if no replacement.
-        int: visit number to compare percentage influence of.
+        int: row index to compare percentage influence of.
     """
 
     if n >= len(pat_df):
         raise ValueError(f"Input 'n' must be smaller than the number of patients. Received n={n}, num_patients={len(pat_df)}.")
-    
+    if add_p_node and change_node:
+        raise ValueError("You cannot both add random nodes and change a node code, please set only one of 'add_p_node' or 'change_node' to True.")
     
     i_list, v_list =None,None
     i_list = copy.deepcopy(pat_df.iloc[n]['indices']) # indices from patient cell
@@ -513,7 +517,50 @@ def return_pat_from_df(pat_df:pd.DataFrame, max_nodes:int, hip_or_knee:str, n:in
         v_list.insert(first_idx, v_list_copy[first_idx])
         v_list.insert(i + 2, v_list_copy[i])
 
-    individual_sparse = tf.sparse.SparseTensor(i_list, v_list, (max_nodes, max_nodes, 200))
+    if change_node:
+
+        last_visit_num = i_list[-1][2]
+        while True:
+            if len(i_list) > 2:
+                first_idx = random.randint(0, len(i_list) - 2)
+                if i_list[first_idx][2] != last_visit_num:
+                    break
+            else:
+                first_idx = 0
+
+        first = copy.deepcopy(i_list[first_idx])
+
+        for i in range(first_idx + 1, len(i_list)):  # go from first_idx onwards
+            if (first[2] == (i_list[i][2] + 1)) and (first[0] == i_list[i][1]):
+                #print(i_list[i])
+                second = copy.deepcopy(i_list[i])
+                random_pair = [first, second]
+                break
+
+        # numbers we don't want to use again
+        exclude1 = random_pair[0][1]
+        exclude2 = random_pair[1][0]
+
+        # set the node numbers to a random read code
+        while True:
+            random_code = random.randint(0, max_nodes)
+            if random_code != exclude1 and random_code != exclude2:
+                break
+
+        random_pair[0][0] = random_code
+        random_pair[1][1] = random_code
+
+        i_list_copy = copy.deepcopy(i_list)
+        # Replace existing inner lists with the new ones
+        i_list_copy[first_idx] = random_pair[0]
+        i_list_copy[i] = random_pair[1]
+        #print(random_pair)
+        individual_sparse = tf.sparse.SparseTensor(i_list_copy, v_list, (max_nodes, max_nodes, 200))
+
+
+
+    if change_node == False:
+        individual_sparse = tf.sparse.SparseTensor(i_list, v_list, (max_nodes, max_nodes, 200))
 
     # Adding the sparse tensor to a list of all the tensors
     ordered_indiv = tf.sparse.reorder(individual_sparse) # reorder required for tensor to work (no effect to outcome)
@@ -538,5 +585,8 @@ def return_pat_from_df(pat_df:pd.DataFrame, max_nodes:int, hip_or_knee:str, n:in
     if add_p_node:
         visit_num = 200-first[2] # 200 is maximum number of visits
         return ordered_indiv, input_4d, demo_tensor, outcome, outcome_bin, visit_num
+    elif change_node:
+        edge_num = len(i_list_copy)-first_idx
+        return ordered_indiv, input_4d, demo_tensor, outcome, outcome_bin, edge_num
     else:
         return ordered_indiv, input_4d, demo_tensor, outcome, outcome_bin
