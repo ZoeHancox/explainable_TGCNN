@@ -281,6 +281,7 @@ def filt_times_pat(f:tf.Tensor, dense_tensor:tf.Tensor, filter_size:int, max_tim
     if stride != 1:
         raise ValueError(f"This calculation requires the filter stride to be 1, you've supplied a stride of {stride}.")
     # First sort the middle of the pat graph which has all the filter timesteps passing over
+    dense_tensor = tf.cast(dense_tensor, dtype=tf.float16)
     tensors = []
     for t in range(filter_size):
         graph_ends = max_timesteps-2*(filter_size-1)
