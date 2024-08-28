@@ -586,12 +586,12 @@ def return_pat_from_df(pat_df:pd.DataFrame, max_nodes:int, hip_or_knee:str, n:in
         else:
             excl_list1 = {item for inner_list in i_list if inner_list[2] == first[2] for item in (inner_list[0], inner_list[1])}
             codes = list(range(max_nodes))
-            # Remove items that are in excl_list
-            codes = [code for code in codes if code not in excl_list]
+            # Remove items that are in excl_list1
+            codes = [code for code in codes if code not in excl_list1]
             random_code = random.choice(codes)
             first[0] = random_code
             i_list_copy = copy.deepcopy(i_list)
-            i_list_copy[first_idx] = random_pair[0]
+            i_list_copy[first_idx] = first
 
         individual_sparse = tf.sparse.SparseTensor(i_list_copy, v_list, (max_nodes, max_nodes, 200))
 
