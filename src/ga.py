@@ -11,7 +11,7 @@ import numpy as np
 
 
 def get_act_metric_per_feat(model, num_filters:int, num_patients:int, pat_df:pd.DataFrame, 
-                         max_event_codes:int, hip_or_knee:str, metric:str):
+                         max_event_codes:int, hip_or_knee:str, metric:str, max_timesteps:int):
     """Get the maximum, median or mean of each feature map for each patient alongside the patients true outcome.
 
     Args:
@@ -34,7 +34,7 @@ def get_act_metric_per_feat(model, num_filters:int, num_patients:int, pat_df:pd.
     filt_nums = list(range(1, num_filters+1))  # Since filt_nums is always 1 to num_filters for each patient
 
     for i in range(num_patients):
-        input_3d, input_4d, demo_tensor, outcome, outcome_bin = utils.return_pat_from_df(pat_df, max_event_codes, hip_or_knee, i)
+        input_3d, input_4d, demo_tensor, outcome, outcome_bin = utils.return_pat_from_df(pat_df, max_event_codes, hip_or_knee, i, max_timesteps)
         
         dense_tensor = tf.sparse.to_dense(input_3d)
         dense_tensor = tf.transpose(dense_tensor, perm=[2, 1, 0])

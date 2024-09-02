@@ -440,7 +440,7 @@ def calibration_slope(true_y, logits):
     
     return slope
 
-def return_pat_from_df(pat_df:pd.DataFrame, max_nodes:int, hip_or_knee:str, n:int, add_p_node:bool=False,
+def return_pat_from_df(pat_df:pd.DataFrame, max_nodes:int, hip_or_knee:str, n:int, num_timesteps=int, add_p_node:bool=False,
                        change_node:bool=False):
     """Select a patient from the indices/values dataframe and get their SparseTensor, 
     dense tensor, demographic information and true outcome/class.
@@ -475,6 +475,7 @@ def return_pat_from_df(pat_df:pd.DataFrame, max_nodes:int, hip_or_knee:str, n:in
     i_list, v_list =None,None
     i_list = copy.deepcopy(pat_df.iloc[n]['indices']) # indices from patient cell
     v_list = copy.deepcopy(pat_df.iloc[n]['values']) # values from patient cell
+
     if add_p_node:
         last_visit_num = i_list[-1][2]
         all_timesteps = {inner_list[2] for inner_list in i_list}
@@ -593,12 +594,12 @@ def return_pat_from_df(pat_df:pd.DataFrame, max_nodes:int, hip_or_knee:str, n:in
             i_list_copy = copy.deepcopy(i_list)
             i_list_copy[first_idx] = first
 
-        individual_sparse = tf.sparse.SparseTensor(i_list_copy, v_list, (max_nodes, max_nodes, 200))
+        individual_sparse = tf.sparse.SparseTensor(i_list_copy, v_list, (max_nodes, max_nodes, num_timesteps))
 
 
 
     if change_node == False:
-        individual_sparse = tf.sparse.SparseTensor(i_list, v_list, (max_nodes, max_nodes, 200))
+        individual_sparse = tf.sparse.SparseTensor(i_list, v_list, (max_nodes, max_nodes, num_timesteps))
 
     # Adding the sparse tensor to a list of all the tensors
     ordered_indiv = tf.sparse.reorder(individual_sparse) # reorder required for tensor to work (no effect to outcome)
@@ -621,7 +622,7 @@ def return_pat_from_df(pat_df:pd.DataFrame, max_nodes:int, hip_or_knee:str, n:in
     demo_tensor = tf.convert_to_tensor([demo_vals])
 
     if add_p_node:
-        visit_num = 200-first[2] # 200 is maximum number of visits
+        visit_num = num_timesteps-first[2]
         return ordered_indiv, input_4d, demo_tensor, outcome, outcome_bin, visit_num
     elif change_node:
         edge_num = len(i_list_copy)-first_idx
