@@ -1,5 +1,5 @@
-# Explainable TG-CNN
-Visual explainability for TG-CNN model for hip replacement risk prediction including Grad-CAM and activation mapping.
+# Explainable TGCNN
+Visual explainability for TGCNN model for hip replacement risk prediction including Grad-CAM and activation mapping.
 
 
 <!-- First train the model in `TGCNN_gradcam.ipynb` and then load your saved weights `hip_1999_to_one_year_advance_model1_CNN_layer` into the `grad_cam_graph_run.ipynb`. -->
@@ -8,9 +8,21 @@ Visual explainability for TG-CNN model for hip replacement risk prediction inclu
 ## ABOUT
 
 
-This code produces explainable graphs using the 3D CNN layers from the [TG-CNN model](https://dl.acm.org/doi/10.1007/978-3-031-16564-1_34) trained to predict hip replacement risk 5 years in advance. These graphs show which edges or timesteps are the most influential to model prediction.
+This code produces explainable graphs using the 3D CNN layers from the [TGCNN model](https://dl.acm.org/doi/10.1007/978-3-031-16564-1_34) trained to predict hip replacement risk 5 years in advance. These graphs show which edges or timesteps are the most influential to model prediction.
 
-In this repository we provide 4 main methodologies (with summary statistic variations):
+The TGCNN model was trained using the following hyperparameters:
+
+* Learning rate: 0.0001
+* Number of filters: 32
+* Filter size: 6
+* Number of LSTM hidden cells: 128
+* $\ell_1$ and $\ell_2$ regularisation parameter: 0.0005
+* FCL size: 128
+* Dropout rate: 0.6
+* Graph $\ell_G$ regularisation strength: 10
+
+
+In this repository we provide 4 main methodologies (with summary statistic variations) for the trained TGCNN model:
 
 * original-Grad-CAM for TGCNN Graphs
 * abs-Grad-CAM for TGCNN Graphs
@@ -34,7 +46,7 @@ The GIF below shows how the gradients of the TGCNN models predicted output in re
 
 ![Grad-CAM graph](documentation/graph_grad_cam.gif)
 
-1. Extract the gradients of the output of the 3D CNN layer in respect to the output of the TG-CNN model.
+1. Extract the gradients of the output of the 3D CNN layer in respect to the output of the TGCNN model.
 2. Calculate the weight of each filter.
 3. Calculate the localisation map (for heatmap colouring) by either getting the ReLU or the absolute value of the sum of the weighted feature maps.
 4. Map the localisation maps to the timesteps and get an average of the weights for each sliding window recurrence on each timestep.
@@ -53,7 +65,7 @@ The GIF below shows how the feature maps from the 3D CNN layer are used to show 
 
 ![fmap-activation graph](documentation/graph_fmap_activation.gif)
 
-1. Extract the feature maps from the 3D CNN layer of the TG-CNN model.
+1. Extract the feature maps from the 3D CNN layer of the TGCNN model.
 2. Find the feature maps with the strongest differentiation of maximum activation between the positive and negative class.
 3. Select the feature map with the largest activation difference (or mean or median of all feature maps) to show timestep/visit activation.
 4. Map the feature map weights to the timesteps and get an average of the weights for each sliding window recurrence on each timestep.
@@ -68,7 +80,7 @@ The GIF below shows how the filters from the 3D CNN layer are used to show edge 
 
 ![Edge activation graph](documentation/graph_edge_activation.gif)
 
-1. Extract the filters from the 3D CNN layer of the TG-CNN model.
+1. Extract the filters from the 3D CNN layer of the TGCNN model.
 2. Find the filter with the strongest differentiation of maximum activation between the positive and negative class.
 3. Select the filter with the largest activation difference (or mean or median of all filters) to show edge activation.
 4. Do element-wise multiplication between the filter and the input graph as a sliding window.
@@ -167,4 +179,4 @@ See [LICENCE](https://github.com/ZoeHancox/explainable_tgcnn/blob/main/LICENSE.t
 
 ## ACKNOWLEDGEMENTS
 
-The TG-CNN model was developed using data provided by patients and collected by the NHS as part of their care and support. 
+The TGCNN model was developed using data provided by patients and collected by the NHS as part of their care and support. 
