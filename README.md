@@ -21,6 +21,10 @@ The TGCNN model was trained using the following hyperparameters:
 * Dropout rate: 0.6
 * Graph $\ell_G$ regularisation strength: 10
 
+Visual overview of the model and explainable AI component:
+
+![Data to prediction and XAI process](documentation/data_to_prediction_process_plus_XAI2.png)
+
 
 In this repository we provide 4 main methodologies (with summary statistic variations) for the trained TGCNN model:
 
