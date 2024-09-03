@@ -1,8 +1,6 @@
 import numpy as np
 from src import utils, trnvaltst_sigmoid_oned, plot_figures
 import tensorflow as tf
-import scipy.stats as stats
-import pandas as pd
 
 
 class EarlyStopping:

@@ -2,11 +2,7 @@
 
 import numpy as np
 import networkx as nx
-import plotly.graph_objects as go
 import pandas as pd
-from src import create_fake_patients, whole_model_demographics_gradcam
-import tensorflow as tf
-from csv import writer
 import matplotlib.pyplot as plt
 
 def create_edges_df_gc(patient_graph:np.array):

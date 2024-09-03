@@ -1,10 +1,7 @@
 import numpy as np
-from src import utils, TGCNN_layer, whole_model, plot_figures
-from tensorflow import keras
+from src import utils
 import tensorflow as tf
 from sklearn.metrics import f1_score, accuracy_score, confusion_matrix, precision_score, roc_auc_score, recall_score
-from csv import writer
-from sklearn.preprocessing import OneHotEncoder
 
 
 def convert_logits_to_probs(logits, y_true):

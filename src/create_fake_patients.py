@@ -1,7 +1,6 @@
 import pandas as pd
 import random
 import tensorflow as tf
-import numpy as np
 
 def create_fake_index_list(max_events, max_nodes):
     """Create indices for fake patients e.g. [[56,23,99], [34,3,98]]
@@ -132,8 +131,8 @@ def return_fake_pat(num_patients, max_visits, max_nodes, hip_or_knee, n, add_p_n
     cv_patients = create_fake_patient_df(num_patients=num_patients, max_events=max_visits, max_nodes=max_nodes)
     only_one_visit = False
     i_list, v_list =None,None
-    i_list = copy.deepcopy(pat_df.iloc[n]['indices']) # indices from patient cell
-    v_list = copy.deepcopy(pat_df.iloc[n]['values']) # values from patient cell
+    i_list = copy.deepcopy(cv_patients.iloc[n]['indices']) # indices from patient cell
+    v_list = copy.deepcopy(cv_patients.iloc[n]['values']) # values from patient cell
     if add_p_node:
         last_visit_num = i_list[-1][2]
         all_timesteps = {inner_list[2] for inner_list in i_list}
