@@ -2,9 +2,6 @@
 Visual explainability for TGCNN model for hip replacement risk prediction including Grad-CAM and activation mapping.
 
 
-<!-- First train the model in `TGCNN_gradcam.ipynb` and then load your saved weights `hip_1999_to_one_year_advance_model1_CNN_layer` into the `grad_cam_graph_run.ipynb`. -->
-
-
 ## ABOUT
 
 
@@ -58,9 +55,11 @@ The GIF below shows how the gradients of the TGCNN models predicted output in re
 6. Colour the stacked nodes (representing the Read Codes recorded during a visit) depending on the percentage influence.
 
 original-Grad-CAM with ReLU:
+
 ![original-Grad-CAM graph plot from code](documentation/gradcam_relu.png)
 
 abs-Grad-CAM with absolute value instead of ReLU:
+
 ![abs-Grad-CAM graph plot from code](documentation/gradcam_abs.png)
 
 ### Activation mapping graphs for timestep
@@ -95,7 +94,7 @@ The GIF below shows how the filters from the 3D CNN layer are used to show edge 
 
 ![Edge activation graph plot from code](documentation/edgeact.png)
 
-To see the interactive Plotly version of these graphs visit [this webpage](https://zoehancox.github.io/graph-survey/pat2.html).
+To see the interactive Plotly version of these graphs visit [this webpage](https://redacted.github.io/graph-survey/pat2.html).
 
 
 ---
@@ -133,9 +132,9 @@ The main code is found in the `src` folder of the repository. See Usage below fo
 
 To clone this repository:
 - Open Git Bash, your Command Prompt or Powershell
-- Navigate to the directory where you want to clone this repository: `cd/path/to/directory`
+- Navigate to the directory where you want to clone this repository: `cd /path/to/directory`
 - Run git clone command:
-`git clone https://github.com/ZoeHancox/explainable_tgcnn`
+`git clone https://github.com/redacted/explainable_tgcnn`
 
 To create a suitable environment we suggest using Anaconda:
 - Build conda environment: `conda create --name graph_viz python=3.8`
@@ -157,29 +156,12 @@ To get the plotly visualisation graphs:
 
 
 
-<!-- ## ROADMAP
-
-Features to come:
-
-- [ ] Show edge activation using NetworkX Plotly
-- [ ] Add a list of your own node names rather than using ints
-- [ ] Rules so that only fully connected graphs can be input
-- [ ] Show time step activation using NetworkX -->
-
-## SUPPORT
-
-See the [Issues](https://github.com/ZoeHancox/explainable_tgcnn/issues) in GitHub for a list of proposed features and known issues. Contact [Zoe Hancox](mailto:Z.L.Hancox@Leeds.ac.uk) for further support. 
-
-
-<!-- ## TESTING
-
-Run tests by using `pytest test_graphs/test_calculations.py` in the top directory. -->
 
 ## LICENSE
 
 Unless stated otherwise, the codebase is released under the BSD Licence. This covers both the codebase and any sample code in the documentation.
 
-See [LICENCE](https://github.com/ZoeHancox/explainable_tgcnn/blob/main/LICENSE.txt) for more information.
+See [LICENCE](https://github.com/redacted/explainable_tgcnn/blob/main/LICENSE.txt) for more information.
 
 ## ACKNOWLEDGEMENTS
 
