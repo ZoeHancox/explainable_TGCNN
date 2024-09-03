@@ -417,12 +417,12 @@ def plot_edge_act_plotly(edge_pos_df:pd.DataFrame, pos_df:pd.DataFrame, read_cod
     have on model prediction.
 
     Args:
-        edge_pos_df (pd.DataFrame): _description_
-        pos_df (pd.DataFrame): _description_
-        read_code_pos_df (pd.DataFrame): _description_
-        years_in_advance (str): _description_
-        logits (tf.Tensor): _description_
-        outcome (str): _description_
+        edge_pos_df (pd.DataFrame): DataFrame with edge coordinates included.
+        pos_df (pd.DataFrame): DataFrame containing node coordinates, with columns: node, x, cumulative_count, max_codes_per_visit, y, node_num.
+        read_code_pos_df (pd.DataFrame): DataFrame containing Read Codes for each node mapped.
+        years_in_advance (str): Number of years the model predicts hip replacement need in advance.
+        logits (tf.Tensor): Output from the model.
+        outcome (str): 'hip' or 'knee'.
         filename (str): Name to save the file as, this is suffixed with '_plot.html'.
         html_open (bool): If True open HTML plotly graph in new tab.
     """

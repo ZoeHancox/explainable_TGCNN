@@ -193,7 +193,7 @@ def create_edge_pos_df(edges_df:pd.DataFrame, pos_df:pd.DataFrame):
 
     Args:
         edges_df (pd.DataFrame): DataFrame with columns start_node, end_node and time_between.
-        pos_df (pd.DataFrame): DataFrame with columns: node	x, cumulative_count, max_codes_per_visit, y, node_num.
+        pos_df (pd.DataFrame): DataFrame with columns: node, x, cumulative_count, max_codes_per_visit, y, node_num.
 
     Returns:
         pd.DataFrame: DataFrame with edge coordinates included.
@@ -214,17 +214,19 @@ def text_color_mapping(numbers):
 
 def plot_gradcam_plotly(edge_pos_df:pd.DataFrame, pos_df:pd.DataFrame, read_code_pos_df:pd.DataFrame,
                         years_in_advance:str, logits:tf.Tensor, outcome:str, filename:str, html_open:bool):
-    """_summary_
+    """Plot the graph visualisation using plotly, where the node colours represent visit influence on outcome prediction.
+    Users can hover over the node to read Read Code descriptions. Nodes stacked vertically are Read Codes which are recorded 
+    on the same visit.
 
     Args:
-        edge_pos_df (pd.DataFrame): _description_
-        pos_df (pd.DataFrame): _description_
-        read_code_pos_df (pd.DataFrame): _description_
-        years_in_advance (str): _description_
-        logits (tf.Tensor): _description_
-        outcome (str): _description_
+        edge_pos_df (pd.DataFrame): DataFrame with edge coordinates included.
+        pos_df (pd.DataFrame): DataFrame containing node coordinates, with columns: node, x, cumulative_count, max_codes_per_visit, y, node_num.
+        read_code_pos_df (pd.DataFrame): DataFrame containing Read Codes for each node mapped.
+        years_in_advance (str): Number of years the model predicts hip replacement need in advance.
+        logits (tf.Tensor): Output from the model.
+        outcome (str): 'hip' or 'knee'.
         filename (str): Name to save the file as, this is suffixed with '_plot.html'.
-        html_open (bool): If True open HTML plotly graph.
+        html_open (bool): If True open HTML plotly graph in new tab.
     """
     edge_x = []
     edge_y = []
