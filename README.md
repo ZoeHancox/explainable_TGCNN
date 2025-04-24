@@ -94,7 +94,7 @@ The GIF below shows how the filters from the 3D CNN layer are used to show edge 
 
 ![Edge activation graph plot from code](documentation/edgeact.png)
 
-To see the interactive Plotly version of these graphs visit [this webpage](https://redacted.github.io/graph-survey/pat2.html).
+To see the interactive Plotly version of these graphs visit [this webpage](https://zoehancox.github.io/graph-survey/pat2.html).
 
 
 ---
@@ -134,7 +134,7 @@ To clone this repository:
 - Open Git Bash, your Command Prompt or Powershell
 - Navigate to the directory where you want to clone this repository: `cd /path/to/directory`
 - Run git clone command:
-`git clone https://github.com/redacted/explainable_tgcnn`
+`git clone https://github.com/ZoeHancox/explainable_tgcnn`
 
 To create a suitable environment we suggest using Anaconda:
 - Build conda environment: `conda create --name graph_viz python=3.8`
@@ -161,7 +161,7 @@ To get the plotly visualisation graphs:
 
 Unless stated otherwise, the codebase is released under the BSD Licence. This covers both the codebase and any sample code in the documentation.
 
-See [LICENCE](https://github.com/redacted/explainable_tgcnn/blob/main/LICENSE.txt) for more information.
+See [LICENCE](https://github.com/ZoeHancox/explainable_tgcnn/blob/main/LICENSE.txt) for more information.
 
 ## ACKNOWLEDGEMENTS
 
